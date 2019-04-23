@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Alascca - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Alascca";
+    var mkdocs_page_input_path = "lld/alascca.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Alascca</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="alasccapipeline">AlasccaPipeline</h1>
+<p>The main class to run Alascca pipeline.</p>
+<pre><code class="py">class AlasccaPipeline(ClinseqPipeline):
+    def __init__(self, sampledata, refdata, job_params, outdir, libdir, maxcores=1, scratch=&quot;/scratch/tmp/tmp/&quot;,
+                 referral_db_conf=&quot;tests/referrals/referral-db-config.json&quot;,
+                 addresses=&quot;tests/referrals/addresses.csv&quot;,
+                 **kwargs):
+        ClinseqPipeline.__init__(self, sampledata, refdata, job_params, outdir, libdir,
+                                 maxcores, scratch, **kwargs)
+
+        self.referral_db_conf = referral_db_conf
+        self.addresses = addresses
+        self.default_job_params[&quot;vardict-min-num-reads&quot;] = 6
+        self.default_job_params[&quot;create_alascca_report&quot;] = True
+
+        # Check to ensure that the sample data is valid for an ALASCCA analysis:
+        self.validate_sample_data_for_alascca()
+
+        # Remove sample capture items for which data is not available:
+        self.check_sampledata()
+
+        # Configure alignment and merging of fastq data for all clinseq barcodes:
+        self.configure_align_and_merge()
+
+        # Configure all panel analyses:
+        self.configure_panel_analyses()
+
+        # Configure QC of all panel data:
+        self.configure_all_panel_qcs()
+
+        # Configure ALASCCA report generation:
+        self.configure_alascca_specific_analysis()
+
+        # Configure fastq QCs:
+        self.configure_fastq_qcs()
+
+        # Configure MultiQC:
+        self.configure_multi_qc()
+</code></pre>
+
+<h3 id="get_normal_and_tumor_captures">get_normal_and_tumor_captures</h3>
+<p>Retrieves the unique normal and tumor capture identifiers for this ALASCCA analysis.
+:return: (normal_capture, tumor_capture) tuple, denoting those unique library captures.</p>
+<pre><code class="py">def get_normal_and_tumor_captures(self):
+    # There must be exactly one tumor and exactly one normal for this to be valid:
+    if len(self.get_mapped_captures_cancer()) != 1 or \
+       len(self.get_mapped_captures_normal()) != 1:
+        raise ValueError(&quot;Invalid pipeline state for configuration of ALASCCA CNA.&quot;)
+
+    normal_capture = self.get_mapped_captures_normal()[0]
+    tumor_capture = self.get_mapped_captures_cancer()[0]
+
+    return normal_capture, tumor_capture
+</code></pre>
+
+<h3 id="configure_alascca_specific_analysis">configure_alascca_specific_analysis</h3>
+<p>Configure the Jobs for specific to the ALASCCA pipeline. The panel analyses and panel QC analyses must be configured before this can be configured.</p>
+<pre><code class="py">def configure_alascca_specific_analysis(self):
+    normal_capture, tumor_capture = self.get_normal_and_tumor_captures()
+    alascca_cna_ouput, alascca_cna_purity = \
+        self.configure_alascca_cna(normal_capture, tumor_capture)
+    self.configure_alascca_report_generation(
+        normal_capture, tumor_capture, alascca_cna_ouput, alascca_cna_purity)
+</code></pre>
+
+<h3 id="configure_alascca_cna">configure_alascca_cna</h3>
+<pre><code class="py">def configure_alascca_cna(self, normal_capture, tumor_capture):
+    tumor_vs_normal_results = self.normal_cancer_pair_to_results[(normal_capture, tumor_capture)]
+    tumor_results = self.capture_to_results[tumor_capture]
+
+    alascca_cna = AlasccaCNAPlot()
+    alascca_cna.input_somatic_vcf = tumor_vs_normal_results.vepped_vcf
+    alascca_cna.input_germline_vcf = tumor_vs_normal_results.vcf_addsample_output
+    alascca_cna.input_cnr = tumor_results.cnr
+    alascca_cna.input_cns = tumor_results.cns
+    alascca_cna.chrsizes = self.refdata['chrsizes']
+
+    tumor_str = compose_lib_capture_str(tumor_capture)
+
+    alascca_cna.output_cna = &quot;{}/variants/{}-alascca-cna.json&quot;.format(
+        self.outdir, tumor_str)
+    alascca_cna.output_purity = &quot;{}/variants/{}-alascca-purity.json&quot;.format(
+        self.outdir, tumor_str)
+    alascca_cna.output_png = &quot;{}/qc/{}-alascca-cna.png&quot;.format(
+        self.outdir, tumor_str)
+    alascca_cna.jobname = &quot;alascca-cna/{}&quot;.format(tumor_str)
+    self.add(alascca_cna)
+
+    return alascca_cna.output_cna, alascca_cna.output_purity
+</code></pre>
+
+<h3 id="configure_compile_metadata">configure_compile_metadata</h3>
+<pre><code class="py">def configure_compile_metadata(self, normal_capture, tumor_capture):
+    blood_barcode = normal_capture.sample_id
+    tumor_barcode = tumor_capture.sample_id
+    metadata_json = &quot;{}/report/{}-{}.metadata.json&quot;.format(self.outdir, blood_barcode, tumor_barcode)
+    compile_metadata_json = CompileMetadata(
+        self.referral_db_conf, blood_barcode, tumor_barcode, metadata_json, self.addresses)
+    compile_metadata_json.jobname = &quot;compile-metadata/{}-{}&quot;.format(tumor_barcode, blood_barcode)
+    self.add(compile_metadata_json)
+
+    return compile_metadata_json.output_json
+</code></pre>
+
+<h3 id="configure_compile_genomic_json">configure_compile_genomic_json</h3>
+<pre><code class="py">def configure_compile_genomic_json(self, normal_capture, tumor_capture,
+                                   alascca_cna_output, alascca_cna_purity_call):
+    tumor_vs_normal_results = self.normal_cancer_pair_to_results[(normal_capture, tumor_capture)]
+    tumor_results = self.capture_to_results[tumor_capture]
+    normal_results = self.capture_to_results[normal_capture]
+
+    blood_barcode = normal_capture.sample_id
+    tumor_barcode = tumor_capture.sample_id
+
+    genomic_json = &quot;{}/report/{}-{}.genomic.json&quot;.format(
+        self.outdir, blood_barcode, tumor_barcode)
+
+    compile_genomic_json = CompileAlasccaGenomicJson(
+        input_somatic_vcf=tumor_vs_normal_results.vepped_vcf,
+        input_cn_calls=alascca_cna_output,
+        input_msisensor=tumor_vs_normal_results.msi_output,
+        input_purity_qc=alascca_cna_purity_call,
+        input_contam_qc=tumor_vs_normal_results.cancer_contam_call,
+        input_tcov_qc=tumor_results.cov_qc_call,
+        input_ncov_qc=normal_results.cov_qc_call,
+        output_json=genomic_json)
+
+    compile_genomic_json.jobname = &quot;compile-genomic/{}-{}&quot;.format(tumor_barcode, blood_barcode)
+    self.add(compile_genomic_json)
+
+    return compile_genomic_json.output_json
+</code></pre>
+
+<h3 id="configure_write_alascca_report">configure_write_alascca_report</h3>
+<pre><code class="py">def configure_write_alascca_report(
+         self, normal_capture, tumor_capture, metadata_json, genomic_json):
+    blood_barcode = normal_capture.sample_id
+    tumor_barcode = tumor_capture.sample_id
+    only_alascca = only_alascca_class_report(blood_barcode, tumor_barcode, self.referral_db_conf)
+
+    pdf = &quot;{}/report/AlasccaReport-{}-{}.pdf&quot;.format(self.outdir, blood_barcode, tumor_barcode)
+    write_alascca_pdf = WriteAlasccaReport(
+        genomic_json, metadata_json, pdf, only_alascca)
+    write_alascca_pdf.jobname = &quot;writeAlasccaPdf/{}-{}&quot;.format(tumor_barcode, blood_barcode)
+    self.add(write_alascca_pdf)
+</code></pre>
+
+<h3 id="configure_alascca_report_generation">configure_alascca_report_generation</h3>
+<p>Configure the generation of the ALASCCA report for this pipeline instance.</p>
+<pre><code class="py">def configure_alascca_report_generation(self, normal_capture, tumor_capture,
+                                        alascca_cna_output, alascca_cna_purity_call):
+    # Always create genomic json
+    genomic_json = self.configure_compile_genomic_json(
+        normal_capture, tumor_capture, alascca_cna_output, alascca_cna_purity_call)
+
+    # Create metadata json and final pdf only if supposed to
+    create_alascca_report = self.get_job_param(&quot;create_alascca_report&quot;)
+    if create_alascca_report:
+        metadata_json = self.configure_compile_metadata(normal_capture, tumor_capture)
+        self.configure_write_alascca_report(normal_capture, tumor_capture,
+                                            metadata_json, genomic_json)
+</code></pre>
+
+<h3 id="get_coverage_bed">get_coverage_bed</h3>
+<p>Retrieve the targets bed file to use for calculating coverage, given the specified targets name. Uses the alascca bed file if available.</p>
+<ul>
+<li>param targets: Target capture name</li>
+<li>return: bed file name</li>
+</ul>
+<pre><code class="py">def get_coverage_bed(self, targets):
+    if 'alascca_targets' in self.refdata['targets']:
+        return self.refdata['targets']['alascca_targets']['targets-bed-slopped20']
+    else:
+        return self.refdata['targets'][targets]['targets-bed-slopped20']
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

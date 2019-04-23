@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>Quick Start - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Quick Start";
+    var mkdocs_page_input_path = "autoseq.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">Quick Start</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#getting-started">Getting Started</a></li>
+    
+
+    <li class="toctree-l2"><a href="#installation">Installation</a></li>
+    
+
+    <li class="toctree-l2"><a href="#command-line-usage">Command Line Usage</a></li>
+    
+
+    <li class="toctree-l2"><a href="#generate-the-reference-files">Generate the reference files</a></li>
+    
+
+    <li class="toctree-l2"><a href="#liqbio-pipeline">LiqBio Pipeline</a></li>
+    
+
+    <li class="toctree-l2"><a href="#general-discriptions">General Discriptions</a></li>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Quick Start</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="getting-started">Getting Started</h2>
+<p>Autoseq is a command line tool and it has multiple pipelines used to analyse cancer genomics data from clinical samples. </p>
+<p>Piplines</p>
+<ul>
+<li>Alascca</li>
+<li>Liqbio <em>(UMI tag processing)</em></li>
+<li>RNAseq (under development)</li>
+</ul>
+<p><em>Latest version: [v0.6.0][dist]</em></p>
+<p>Note:</p>
+<p><strong>This version of autoseq is specially updated for PROBIO trail on prostate cancer.</strong></p>
+<h2 id="installation">Installation</h2>
+<p>Step 1: Clone the alascca-dotfiles repo</p>
+<pre><code class="sh">git clone https://github.com/clinseq/probio-dotfiles.git /nfs/PROBIO/probio-dotfiles
+</code></pre>
+
+<p>Step 2: Go to dotfiles directory</p>
+<pre><code class="sh">cd /nfs/PROBIO/probio-dotfiles
+</code></pre>
+
+<p>Step 3: Run the <code>.bash_profile</code> file to create new environment</p>
+<pre><code class="sh">. /nfs/PROBIO/probio-dotfiles/.bash_profile
+</code></pre>
+
+<p>Step 4: Run this script to install all prerequisites</p>
+<pre><code class="sh">bash install-prereqs.sh
+</code></pre>
+
+<h2 id="command-line-usage">Command Line Usage</h2>
+<pre><code class="sh">Usage: autoseq [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --ref TEXT          json with reference files to use
+  --job-params TEXT   JSON file specifying various pipeline job parameters.
+  --outdir PATH       output directory
+  --libdir TEXT       directory to search for libraries
+  --runner_name TEXT  Runner to use.
+  --loglevel TEXT     level of logging
+  --jobdb TEXT        sqlite3 database to write job info and stats
+  --dot_file TEXT     write graph to dot file with this name
+  --cores INTEGER     max number of cores to allow jobs to use
+  --umi               To process the data with UMI- Unique Molecular
+                      Identifier
+  --scratch TEXT      scratch dir to use
+  --help              Show this message and exit.
+
+Commands:
+  alascca
+  liqbio
+  liqbio-prepare
+
+</code></pre>
+
+<h2 id="generate-the-reference-files">Generate the reference files</h2>
+<p><code>generate-ref</code> command can be used to generate all required reference files to run the pipeline. </p>
+<pre><code class="sh">generate-ref --genome-resources /nfs/PROBIO/genome-resources --outdir /nfs/PROBIO/autoseq-genome
+</code></pre>
+
+<h2 id="liqbio-pipeline">LiqBio Pipeline</h2>
+<pre><code class="sh">autoseq --ref ref.json --outdir /path/to/outdir --jobdb jobdb.json --cores 5 --runner_name slurmrunner --libdir /path/to/libdir liqbio sample.json
+</code></pre>
+
+<p><em>with UMI</em></p>
+<p><code>--umi</code> flag is used to call UMI pipeline</p>
+<pre><code class="sh">autoseq --ref ref.json --outdir /path/to/outdir --jobdb jobdb.json --cores 5 --runner_name slurmrunner --libdir /path/to/libdir --umi liqbio sample.json
+</code></pre>
+
+<h2 id="general-discriptions">General Discriptions</h2>
+<p><b>Clinseq barcodes</b></p>
+<p>Each sample+preparation+capture item should have a corresponding barcode with the format <code>PROJECT-SDID-TYPE-SAMPLEID-PREPID-CAPTUREID</code> where:</p>
+<ul>
+<li>
+<p><code>PROJECT</code> is a two-letter short project designator. One of <code>AL</code> (alascca), <code>LB</code> (liquid biopspy) and <code>OT</code> (other)</p>
+</li>
+<li>
+<p><code>SDID</code> is an identifier for a single individual. It must match the pattern <code>P-[a-zA-Z0-9]+</code> (<em>NOTE:</em> This necessitates an additional "-" within this field).</p>
+</li>
+<li>
+<p><code>TYPE</code> is the sample type, one of <code>T</code> (tumor), <code>N</code> (normal) and <code>CFDNA</code> (ctDNA)</p>
+</li>
+<li>
+<p><code>SAMPLEID</code> identifies a single biological sample, for example piece of a tumor or a single tube of plasma. It must match the pattern <code>[a-zA-Z0-9]+</code>.</p>
+</li>
+<li>
+<p><code>PREPID</code> specifies the library preparation kit used. It must be a two-letter shortname followed by a string matching <code>[0-9]+</code>, which can be used to indicate the date on which the prep was performed. The date string should <em>preferably</em> be in the format <code>YYYYMMDDHHMM</code>. For example, <code>201701241540</code> would indicate year 2017, January 24th, at 15:40.</p>
+</li>
+<li>
+<p><code>CAPTUREID</code> specifies the capture that was performed on the library (if any). It must match either <code>WGS</code> (indicating that no capture was performed), or else a two-letter shortname indicating the capture kit used, followed by a string matching <code>[0-9]+</code>, which can be used to indicate the date on which the capture was performed. The date should <em>preferably</em> be in the format <code>YYYYMMDDHHMM</code>.</p>
+</li>
+</ul>
+<p><em>NOTE:</em> The combination <code>SDID-TYPE-SAMPLEID</code> must uniquely identify a single sample.</p>
+<p><em>NOTE:</em> A clinseq barcode is not garuanteed to uniquely specify a single sample+library+capture item, but in practice it should be unique if precise preparation and capture times are included within the <code>PREPID</code> and <code>CAPTUREID</code> fields.</p>
+<p><b>Allowed Prep IDs</b></p>
+<p>Autoseq know about the following preparation methods: </p>
+<ul>
+<li><code>BN</code> = <code>BIOO_NEXTFLEX</code></li>
+<li><code>KH</code> = <code>KAPA_HYPERPREP</code></li>
+<li><code>KP</code> = <code>KAPA_HYPERPLUS</code></li>
+<li><code>TD</code> = <code>THRUPLEX_DNASEQ</code></li>
+<li><code>TP</code> = <code>THRUPLEX_PLASMASEQ</code></li>
+<li><code>TF</code> = <code>THRUPLEX_FD</code></li>
+<li><code>TS</code> = <code>TRUSEQ_RNA</code></li>
+<li><code>NN</code> = <code>NEBNEXT_RNA</code></li>
+<li><code>VI</code> = <code>VILO_RNA</code>            </li>
+</ul>
+<p><b>Allowed Capture IDs</b></p>
+<p>Autoseq knows about the following capture kits:</p>
+<ul>
+<li><code>CS</code> = <code>clinseq_v3_targets</code></li>
+<li><code>CZ</code> = <code>clinseq_v4</code></li>
+<li><code>EX</code> = <code>EXOMEV3</code></li>
+<li><code>EO</code> = <code>EXOMEV1</code></li>
+<li><code>RF</code> = <code>fusion_v1</code></li>
+<li><code>CC</code> = <code>core_design</code></li>
+<li><code>CD</code> = <code>discovery_coho</code></li>
+<li><code>CB</code> = <code>big_design</code></li>
+<li><code>TT</code> = <code>test-regions</code></li>
+<li><code>CM</code> = <code>monitor</code></li>
+<li><code>CP</code> = <code>progression</code></li>
+<li><code>PC</code> = <code>probio_comprehensive</code></li>
+<li><code>PB</code> = <code>probio_biomarker_signature</code></li>
+<li><code>PA</code> = <code>pancancer</code></li>
+</ul>
+<p>Newer version of autoseq has three more panels such as PC, PB and PA.</p>
+<p><b>Liqbio</b></p>
+<p>The <code>sample.json</code> file has the format (right side). In this file, a single tumor and normal sample is allowed, but multiple plasma samples. If no tumor or normal sample is avaialble, they can be set to <code>null</code>, but if no plasma samples are available, it should be set to <code>[]</code> (empty list), for example <code>"CFDNA": []</code>.</p>
+<pre><code>{
+    &quot;sdid&quot;: &quot;NA12877&quot;,
+    &quot;panel&quot;: {
+        &quot;T&quot;: &quot;NA12877-T-03098849-TD1-TT1&quot;,
+        &quot;N&quot;: &quot;NA12877-N-03098121-TD1-TT1&quot;,
+        &quot;CFDNA&quot;: [&quot;NA12877-CFDNA-03098850-TD1-TT1&quot;, &quot;NA12877-CFDNA-03098850-TD2-TT1&quot;]
+    },
+    &quot;wgs&quot;: {
+        &quot;T&quot;: &quot;NA12877-T-03098849-TD1-WGS&quot;,
+        &quot;N&quot;: &quot;NA12877-N-03098121-TD1-WGS&quot;,
+        &quot;CFDNA&quot;: [&quot;NA12877-CFDNA-03098850-TD1-WGS&quot;]
+    }
+}
+</code></pre>
+
+<p>For the plasma samples, merging of libraries will take place before calling. On alignment, the <code>@RG</code> tag will be set as follows: </p>
+<ul>
+<li><code>ID</code> = <code>SDID-TYPE-SAMPLEID-PREPID-CAPTUREID</code></li>
+<li><code>LB</code> = <code>SDID-TYPE-SAMPLEID-PREPID</code></li>
+<li><code>SM</code> = <code>SDID-TYPE-SAMPLEID</code></li>
+</ul>
+<p>Of note is that the library tag (<code>LB</code>) does not include the <code>CAPTUREID</code> part, to ensure that PCR duplicates are removed correctly. </p>
+<p>If a single prepared samples is exposed to capture twice, to create the libraries <code>NA12877-T-49-TD1-TT1</code> and <code>NA12877-T-49-TD1-TT2</code> (note different digits in the capture id), read pairs being identical between the two libraries should be considered duplicates since the sample was split after the final PCR step. Therefore, the <code>LB</code> for these libraries is set to <code>NA12877-T-49-TD1</code>. After merging the bam files, removal of PCR duplicates is done using Picard MarkDuplicates, which will do the right thing. </p>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../pipeline/" class="btn btn-neutral float-right" title="Work Flow">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Autoseq"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../pipeline/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>

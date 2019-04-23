@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Liqbio - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Liqbio";
+    var mkdocs_page_input_path = "lld/liqbio.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Liqbio</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="liqbiopipeline">LiqBioPipeline</h1>
+<p>Liqbiopipeline comprises,</p>
+<ul>
+<li>Set the min alt frac value</li>
+<li>Remove clinseq barcodes for which data is not available:</li>
+<li>Configure the umi processes from fastq to bam file:</li>
+<li>Configure alignment and merging of fastq data for all clinseq barcodes</li>
+<li>Configure all panel analyses</li>
+<li>Configure liqbio-specific panel analyses</li>
+<li>Configure additional msings analysis</li>
+<li>Configure QC of all panel data</li>
+<li>Configure fastq QCs</li>
+<li>Configure the low-pass whole genome analysis</li>
+<li>Configure low-pass whole genome data QC</li>
+<li>Configure MultiQC</li>
+</ul>
+<pre><code class="py">class LiqBioPipeline(ClinseqPipeline):
+    def __init__(self, sampledata, refdata, job_params, outdir, libdir, umi, maxcores=1, scratch=&quot;/scratch/tmp/tmp&quot;,
+                 **kwargs):
+        ClinseqPipeline.__init__(self, sampledata, refdata, job_params, outdir, libdir, umi,
+                                 maxcores, scratch, **kwargs)
+
+        # Set the min alt frac value:
+        self.default_job_params[&quot;vardict-min-alt-frac&quot;] = 0.01
+        self.default_job_params[&quot;vardict-min-num-reads&quot;] = None
+        self.default_job_params[&quot;vep-additional-options&quot;] = &quot; --pick --filter_common &quot;
+
+        self.check_sampledata()
+
+        if umi:
+            self.configure_umi_processing()
+        else:
+            self.configure_align_and_merge()
+
+        self.configure_panel_analyses()
+
+        self.configure_panel_analyses_liqbio()
+
+        self.configure_panel_msings_analyses()
+
+        self.configure_all_panel_qcs()
+
+        self.configure_fastq_qcs()
+
+        self.configure_lowpass_analyses()
+
+        self.configure_all_lowpass_qcs()
+
+        self.configure_multi_qc()
+</code></pre>
+
+<h3 id="configure_single_capture_analysis_liqbio">configure_single_capture_analysis_liqbio</h3>
+<p>Configure svcaller analysis for each event type</p>
+<pre><code class="py">def configure_single_capture_analysis_liqbio(self, unique_capture):
+    input_bam = self.get_capture_bam(unique_capture)
+    sample_str = compose_lib_capture_str(unique_capture)
+
+    for event_type in [&quot;DEL&quot;, &quot;DUP&quot;, &quot;INV&quot;, &quot;TRA&quot;]:
+        svcaller = Svcaller()
+        svcaller.input_bam = input_bam
+        svcaller.event_type = event_type
+        svcaller.output_bam = &quot;{}/svs/{}-{}.bam&quot;.format(self.outdir, sample_str, event_type)
+        svcaller.output_gtf = &quot;{}/svs/{}-{}.gtf&quot;.format(self.outdir, sample_str, event_type)
+        svcaller.reference_sequence = self.refdata[&quot;reference_genome&quot;]
+        svcaller.scratch = self.scratch
+        self.add(svcaller)
+
+        self.set_capture_svs(unique_capture, event_type, (svcaller.output_bam, svcaller.output_gtf))
+
+    sveffect = Sveffect()
+    sveffect.input_del_gtf = self.capture_to_results[unique_capture].svs[&quot;DEL&quot;][1]
+    sveffect.input_dup_gtf = self.capture_to_results[unique_capture].svs[&quot;DUP&quot;][1]
+    sveffect.input_inv_gtf = self.capture_to_results[unique_capture].svs[&quot;INV&quot;][1]
+    sveffect.input_tra_gtf = self.capture_to_results[unique_capture].svs[&quot;TRA&quot;][1]
+    sveffect.ts_regions = self.refdata[&quot;ts_regions&quot;]
+    sveffect.ar_regions = self.refdata[&quot;ar_regions&quot;]
+    sveffect.fusion_regions = self.refdata[&quot;fusion_regions&quot;]
+    sveffect.output_combined_bed = &quot;{}/svs/{}_combined.bed&quot;.format(self.outdir, sample_str)
+    sveffect.output_effects_json = &quot;{}/svs/{}_effects.json&quot;.format(self.outdir, sample_str)
+
+    self.add(sveffect)
+
+    self.set_capture_sveffect(unique_capture, sveffect.output_effects_json)
+</code></pre>
+
+<h3 id="configure_panel_analyses_liqbio">configure_panel_analyses_liqbio</h3>
+<p>Configure liqbio analyses to be run on all unique panel captures individually and Configure a liqbio analyses for each normal-cancer pairing.</p>
+<pre><code class="py">def configure_panel_analyses_liqbio(self):
+    for unique_capture in self.get_mapped_captures_no_wgs():
+        self.configure_single_capture_analysis_liqbio(unique_capture)
+        self.configure_svict(unique_capture)
+
+    for normal_capture in self.get_mapped_captures_normal():
+        for cancer_capture in self.get_mapped_captures_cancer():
+            self.configure_panel_analysis_cancer_vs_normal_liqbio(
+                normal_capture, cancer_capture)
+</code></pre>
+
+<h3 id="configure_svict">configure_svict</h3>
+<p>configuring SViCT which is a computational tool for detecting structural variations from cell free DNA (cfDNA) containing low dilutions of circulating tumor DNA (ctDNA).</p>
+<pre><code class="py">def configure_svict(self, unique_capture):
+    input_bam = self.get_capture_bam(unique_capture, umi=False)
+    sample_str = compose_lib_capture_str(unique_capture)
+
+    svict = SViCT()
+    svict.input_bam = input_bam
+    svict.reference_sequence = self.refdata[&quot;reference_genome&quot;]
+    svict.output = &quot;{}/svs/{}-svict&quot;.format(self.outdir, sample_str)
+
+    self.add(svict)
+</code></pre>
+
+<h3 id="configure_sv_calling">configure_sv_calling</h3>
+<p>Configure Structural Variant Calling, to identify structural variants in sample,
+Varinat callers are Svaba, Lumpy.</p>
+<ul>
+<li>param normal_capture: A unique normal sample library capture</li>
+<li>param cancer_capture: A unique cancer sample library capture</li>
+</ul>
+<pre><code class="py">def configure_sv_calling(self, normal_capture, cancer_capture):
+
+    cancer_bam = self.get_capture_bam(cancer_capture, umi=False)
+    normal_bam = self.get_capture_bam(normal_capture, umi=False)
+    target_name = self.get_capture_name(cancer_capture.capture_kit_id)
+
+    cancer_capture_str = compose_lib_capture_str(cancer_capture)
+    normal_capture_str = compose_lib_capture_str(normal_capture)
+
+    svaba = Svaba()
+    svaba.input_normal = normal_bam
+    svaba.input_tumor = cancer_bam
+    svaba.reference_sequence = self.refdata[&quot;bwaIndex&quot;]
+    svaba.threads = self.maxcores
+    svaba.target_bed = self.refdata['targets'][target_name]['targets-bed-slopped20']
+    svaba.output_sample = &quot;{}/svs/svaba/{}-{}-svaba&quot;.format(self.outdir, normal_capture_str, cancer_capture_str)
+
+    self.add(svaba)
+
+    lumpy = Lumpy()
+    lumpy.input_normal = normal_bam
+    lumpy.input_tumor = cancer_bam
+    lumpy.normal_discordants = &quot;{}/svs/lumpy/{}-discordants.bam&quot;.format(self.outdir, normal_capture_str)
+    lumpy.tumor_discordants = &quot;{}/svs/lumpy/{}-discordants.bam&quot;.format(self.outdir,  cancer_capture_str)
+    lumpy.normal_splitters = &quot;{}/svs/lumpy/{}-splitters.bam&quot;.format(self.outdir, normal_capture_str) 
+    lumpy.tumor_splitters = &quot;{}/svs/lumpy/{}-splitters.bam&quot;.format(self.outdir,  cancer_capture_str) 
+    lumpy.output = &quot;{}/svs/lumpy/{}-{}-lumpy.vcf&quot;.format(self.outdir, normal_capture_str, cancer_capture_str)
+    lumpy.threads = self.maxcores
+
+    self.add(lumpy)
+</code></pre>
+
+<h3 id="configure_liqbio_cna">configure_liqbio_cna</h3>
+<pre><code class="py">def configure_liqbio_cna(self, normal_capture, cancer_capture):
+    tumor_vs_normal_results = self.normal_cancer_pair_to_results[(normal_capture, cancer_capture)]
+    tumor_results = self.capture_to_results[cancer_capture]
+
+    pureCN_outputs = self.normal_cancer_pair_to_results[(normal_capture, cancer_capture)].pureCN_outputs
+
+    normal_str = compose_lib_capture_str(normal_capture)
+    cancer_str = compose_lib_capture_str(cancer_capture)
+
+    liqbio_cna = LiqbioCNAPlot()
+    liqbio_cna.input_tumor_cnr = self.capture_to_results[cancer_capture].cnr
+    liqbio_cna.input_tumor_cns = self.capture_to_results[cancer_capture].cns
+    liqbio_cna.input_normal_cnr = self.capture_to_results[normal_capture].cnr
+    liqbio_cna.input_normal_cns = self.capture_to_results[normal_capture].cns
+    liqbio_cna.input_het_snps_vcf = self.normal_cancer_pair_to_results[(normal_capture, cancer_capture)].vcf_addsample_output
+    liqbio_cna.input_purecn_csv = pureCN_outputs[&quot;csv&quot;]
+    liqbio_cna.input_purecn_genes_csv = pureCN_outputs[&quot;genes_csv&quot;]
+    liqbio_cna.input_purecn_loh_csv = pureCN_outputs[&quot;loh_csv&quot;]
+    liqbio_cna.input_purecn_variants_csv = pureCN_outputs[&quot;variants_csv&quot;]
+    liqbio_cna.input_svcaller_T_DEL = self.capture_to_results[cancer_capture].svs[&quot;DEL&quot;][1]
+    liqbio_cna.input_svcaller_T_DUP = self.capture_to_results[cancer_capture].svs[&quot;DUP&quot;][1]
+    liqbio_cna.input_svcaller_T_INV = self.capture_to_results[cancer_capture].svs[&quot;INV&quot;][1]
+    liqbio_cna.input_svcaller_T_TRA = self.capture_to_results[cancer_capture].svs[&quot;TRA&quot;][1]
+    liqbio_cna.input_svcaller_N_DEL = self.capture_to_results[normal_capture].svs[&quot;DEL&quot;][1]
+    liqbio_cna.input_svcaller_N_DUP = self.capture_to_results[normal_capture].svs[&quot;DUP&quot;][1]
+    liqbio_cna.input_svcaller_N_INV = self.capture_to_results[normal_capture].svs[&quot;INV&quot;][1]
+    liqbio_cna.input_svcaller_N_TRA = self.capture_to_results[normal_capture].svs[&quot;TRA&quot;][1]
+    liqbio_cna.input_germline_mut_vcf = self.get_vepped_germline_vcf(normal_capture) # Vepped germline variants
+    liqbio_cna.input_somatic_mut_vcf = self.normal_cancer_pair_to_results[(normal_capture, cancer_capture)].vepped_vcf
+    liqbio_cna.output_plot_png = &quot;{}/qc/{}-{}-liqbio-cna.png&quot;.format(self.outdir, normal_str, cancer_str)
+    liqbio_cna.output_cna_json = &quot;{}/variants/{}-{}-liqbio-cna.json&quot;.format(self.outdir, normal_str, cancer_str)
+    liqbio_cna.output_purity_json = &quot;{}/qc/{}-{}-liqbio-purity.json&quot;.format(self.outdir, normal_str, cancer_str)
+    self.add(liqbio_cna)
+</code></pre>
+
+<h3 id="configure_panel_analysis_cancer_vs_normal_liqbio">configure_panel_analysis_cancer_vs_normal_liqbio</h3>
+<p>.. note::
+    In-house developed PureCN script is not compatiable with latest version of PureCN. As of now We have commented out this step in latest version. </p>
+<pre><code class="py">def configure_panel_analysis_cancer_vs_normal_liqbio(self, normal_capture, cancer_capture):
+    capture_name = self.get_capture_name(cancer_capture.capture_kit_id)
+
+    self.configure_sv_calling(normal_capture, cancer_capture)
+
+    # self.configure_manta(normal_capture, cancer_capture)
+
+    # if self.refdata['targets'][capture_name]['purecn_targets']:
+    #     self.configure_purecn(normal_capture, cancer_capture)
+    #     self.configure_liqbio_cna(normal_capture, cancer_capture)
+
+</code></pre>
+
+<h3 id="configure_umi_processing">configure_umi_processing</h3>
+<p>Configure the umi process for SNV, small INDEL calling and normal process (markdups after realignment-1 finishes) for structural variant calling</p>
+<pre><code class="py">def configure_umi_processing(self):
+    capture_to_barcodes = self.get_unique_capture_to_clinseq_barcodes()
+    for unique_capture in capture_to_barcodes.keys():
+        capture_kit = unique_capture.capture_kit_id
+        for clinseq_barcode in capture_to_barcodes[unique_capture]:
+            trimmed_fqfiles = fq_trimming(self,
+                              fq1_files=find_fastqs(clinseq_barcode, self.libdir)[0],
+                              fq2_files=find_fastqs(clinseq_barcode, self.libdir)[1],
+                              clinseq_barcode=clinseq_barcode,
+                              ref=self.refdata['bwaIndex'],
+                              outdir= &quot;{}/bams/{}&quot;.format(self.outdir, capture_kit),
+                              maxcores=self.maxcores)
+
+        bam_file = self.configure_fastq_to_bam(fq_files=trimmed_fqfiles, 
+                                                clinseq_barcode=clinseq_barcode, 
+                                                capture_kit=capture_kit)
+        realigned_bam = self.configure_alignment_with_umi(bamfile=bam_file, 
+                                                clinseq_barcode=clinseq_barcode, 
+                                                capture_kit=capture_kit, jobname='1')
+        consensus_reads = self.configure_consensus_reads_calling(bam=realigned_bam, 
+                                                clinseq_barcode=clinseq_barcode,
+                                                capture_kit=capture_kit)
+        realigned_bam2 = self.configure_alignment_with_umi(bamfile=consensus_reads, 
+                                                clinseq_barcode=clinseq_barcode, 
+                                                capture_kit=capture_kit, jobname='2')
+        filtered_bam = self.configure_consensus_read_filter(bam=realigned_bam2 ,
+                                                clinseq_barcode=clinseq_barcode,
+                                                capture_kit=capture_kit)
+        clip_overlap_bam = self.configure_clip_overlapping(bam=filtered_bam,
+                                                clinseq_barcode=clinseq_barcode,
+                                                capture_kit=capture_kit)
+        mark_dups_bam = self.configure_markdups(bamfile=realigned_bam, unique_capture=unique_capture)
+
+        self.set_capture_bam(unique_capture, filtered_bam, self.umi)
+</code></pre>
+
+<h3 id="configure_alignment_with_umi">configure_alignment_with_umi</h3>
+<ul>
+<li>Map the reads with bwa and merge with the UMI tags (picard SamToFastq, bwa mem,  picard MergeBamAlignment)</li>
+<li>GATK - Indel Realignment </li>
+</ul>
+<pre><code class="py">def configure_alignment_with_umi(self, bamfile, clinseq_barcode, capture_kit, jobname):
+    align_unmap_bam = AlignUnmappedBam()
+    align_unmap_bam.input_bam = bamfile
+    align_unmap_bam.reference_genome = self.refdata['bwaIndex']
+    align_unmap_bam.output_bam = &quot;{}/bams/{}/{}.mapped-{}.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode, jobname)
+    align_unmap_bam.jobname = &quot;alignment-of-unmapped-bam-&quot;+ jobname + '-' + clinseq_barcode
+    self.add(align_unmap_bam)
+
+    realingment = Realignment()
+    realingment.input_bam = align_unmap_bam.output_bam
+    realingment.output_bam = &quot;{}/bams/{}/{}.realigned-{}.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode, jobname)
+    realingment.reference_genome = self.refdata['reference_genome']
+    realingment.known_indel1 = self.refdata['1KG']
+    realingment.known_indel2 = self.refdata['Mills_and_1KG_gold_standard']
+    realingment.target_intervals = &quot;{}/bams/{}/{}.intervals&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    realingment.jobname = &quot;realignment-&quot; + jobname + '-' + clinseq_barcode
+    self.add(realingment)
+
+    return realingment.output_bam
+</code></pre>
+
+<h3 id="configure_fastq_to_bam">configure_fastq_to_bam</h3>
+<p>Extract UMIs from trimmed fastq and store in RX tag of unmapped bam (fgbio FastqToBam)</p>
+<pre><code class="py">def configure_fastq_to_bam(self, fq_files, clinseq_barcode, capture_kit):
+
+    library = parse_prep_id(clinseq_barcode)
+    sample = compose_sample_str(extract_unique_capture(clinseq_barcode))
+
+    fastq_to_bam = FastqToBam()
+    fastq_to_bam.input_fastq1 = fq_files[0]
+    fastq_to_bam.input_fastq2 = fq_files[1]
+    fastq_to_bam.sample = sample
+    fastq_to_bam.library = library
+    fastq_to_bam.output_bam = &quot;{}/bams/{}/{}.unmapped.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    fastq_to_bam.jobname = &quot;fastq-to-bam&quot; + '-' + clinseq_barcode
+    self.add(fastq_to_bam)
+
+    return fastq_to_bam.output_bam
+</code></pre>
+
+<h3 id="configure_consensus_reads_calling">configure_consensus_reads_calling</h3>
+<ul>
+<li>Group the reads together based on UMI tags or sequences</li>
+<li>Calls duplex consensus sequences from reads generated from the same double-stranded source molecule.</li>
+</ul>
+<pre><code class="py">def configure_consensus_reads_calling(self, bam,  clinseq_barcode, capture_kit):
+
+    group_reads = GroupReadsByUmi()
+    group_reads.input_bam = bam
+    group_reads.output_histogram = &quot;{}/bams/{}/{}.grouped.bam.fs.txt&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    group_reads.output_bam = &quot;{}/bams/{}/{}.grouped.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    group_reads.jobname = &quot;group-reads-by-umi&quot; + '-' + clinseq_barcode
+    self.add(group_reads)
+
+    call_consensus_reads = CallDuplexConsensusReads()
+    call_consensus_reads.input_bam = group_reads.output_bam
+    call_consensus_reads.output_bam = &quot;{}/bams/{}/{}.consensus.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    call_consensus_reads.jobname = &quot;call-duplex-consensus-reads&quot; + '-' + clinseq_barcode
+    self.add(call_consensus_reads)
+
+    return call_consensus_reads.output_bam
+</code></pre>
+
+<h3 id="configure_consensus_read_filter">configure_consensus_read_filter</h3>
+<pre><code class="py">def configure_consensus_read_filter(self, bam, clinseq_barcode, capture_kit):
+
+    filter_con_reads = FilterConsensusReads()
+    filter_con_reads.input_bam = bam
+    filter_con_reads.reference_genome = self.refdata['reference_genome']
+    filter_con_reads.output_bam = &quot;{}/bams/{}/{}.consensus.filtered.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    filter_con_reads.jobname = &quot;filter-consensus-reads-{}&quot;.format(clinseq_barcode)
+    self.add(filter_con_reads)
+
+    return filter_con_reads.output_bam
+</code></pre>
+
+<h3 id="configure_clip_overlapping">configure_clip_overlapping</h3>
+<pre><code class="py">def configure_clip_overlapping(self, bam, clinseq_barcode, capture_kit):
+
+    clip_overlap_reads = ClipBam()
+    clip_overlap_reads.input_bam = bam
+    clip_overlap_reads.reference_genome = self.refdata['reference_genome']
+    clip_overlap_reads.output_bam = &quot;{}/bams/{}/{}.clip.overlapped.bam&quot;.format(self.outdir, capture_kit, clinseq_barcode)
+    clip_overlap_reads.metrics_txt = &quot;{}/qc/{}-clip_overlap_metrix.txt&quot;.format(self.outdir, clinseq_barcode)
+    self.add(clip_overlap_reads)
+
+    return clip_overlap_reads.output_bam
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

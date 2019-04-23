@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Cli - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Cli";
+    var mkdocs_page_input_path = "lld/cli.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Cli</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h2 id="cli-options-and-commands">CLI - Options and Commands</h2>
+<p>Params can be used to run the pipeline</p>
+<ul>
+<li><code>--ref</code> TEXT          json with reference files to us e</li>
+<li><code>--job-params</code> TEXT   JSON file specifying various pipeline job parameters.</li>
+<li><code>--outdir</code> PATH       output directory</li>
+<li><code>--libdir</code> TEXT       directory to search for libraries</li>
+<li><code>--runner_name</code> TEXT  Runner to use.</li>
+<li><code>--loglevel</code> TEXT     level of logging</li>
+<li><code>--jobdb</code> TEXT        sqlite3 database to write job info and stats</li>
+<li><code>--dot_file</code> TEXT     write graph to dot file with this name</li>
+<li><code>--cores</code> INTEGER     max number of cores to allow jobs to use</li>
+<li><code>--scratch</code> TEXT      scratch dir to use</li>
+<li><code>--help</code>              Show this message and exit.</li>
+</ul>
+<pre><code class="py">
+@click.group()
+@click.option('--ref', default='/nfs/ALASCCA/autoseq-genome/autoseq-genome.json',
+              help='json with reference files to use',
+              type=str)
+@click.option('--job-params', default=None, help='JSON file specifying various pipeline job ' + \
+                                                 'parameters.',
+              type=str)
+@click.option('--outdir', default='/tmp/autoseq-test', help='output directory', type=click.Path())
+@click.option('--libdir', default=&quot;/tmp&quot;, help=&quot;directory to search for libraries&quot;)
+@click.option('--runner_name', default='shellrunner', help='Runner to use.')
+@click.option('--loglevel', default='INFO', help='level of logging')
+@click.option('--jobdb', default=None, help=&quot;sqlite3 database to write job info and stats&quot;)
+@click.option('--dot_file', default=None, help=&quot;write graph to dot file with this name&quot;)
+@click.option('--cores', default=1, help=&quot;max number of cores to allow jobs to use&quot;)
+@click.option('--umi', is_flag=True, help=&quot;To process the data with UMI- Unique Molecular Identifier&quot;)
+@click.option('--scratch', default=&quot;/tmp&quot;, help=&quot;scratch dir to use&quot;)
+@click.pass_context
+def cli(ctx, ref, job_params, outdir, libdir, runner_name, loglevel, jobdb, dot_file, cores, umi, scratch):
+    setup_logging(loglevel)
+    logging.debug(&quot;Reading reference data from {}&quot;.format(ref))
+    ctx.obj = {}
+    ctx.obj['refdata'] = load_ref(ref)
+    ctx.obj['job_params'] = load_job_params(job_params)
+    ctx.obj['outdir'] = outdir
+    ctx.obj['libdir'] = libdir
+    ctx.obj['pipeline'] = None
+    ctx.obj['runner'] = get_runner(runner_name, cores)
+    ctx.obj['jobdb'] = jobdb
+    ctx.obj['dot_file'] = dot_file
+    ctx.obj['cores'] = cores
+    ctx.obj['umi'] = umi
+    ctx.obj['scratch'] = scratch
+
+    def capture_sigint(sig, frame):
+        &quot;&quot;&quot;
+        Capture ctrl-c (or SIGINT sent in other ways).
+        1. update remote log
+        :param sig:
+        :param frame:
+        :return:
+        &quot;&quot;&quot;
+        try:
+            ctx.obj['pipeline'].stop()
+            logging.info(&quot;Stopping jobs...&quot;)
+        except AttributeError:
+            logging.debug(&quot;No pipeline to stop.&quot;)
+
+    signal.signal(signal.SIGINT, capture_sigint)
+    signal.signal(signal.SIGTERM, capture_sigint)
+</code></pre>
+
+<h3 id="load-job-params">load job params</h3>
+<p>Return an empty dictionary if no job parameters file is specified, which
+will result in default job parameters being applied:</p>
+<pre><code class="py">def load_job_params(job_params_filename):
+    if job_params_filename:
+        return json.load(open(job_params_filename))
+    else:
+        return {}
+</code></pre>
+
+<h3 id="convert-to-absolute-path">convert to absolute path</h3>
+<p>Convert the input potential relative file path to an absolute path by
+prepending the specified base_path, but only if the resulting absolute path points
+to a pre-existing file or directory.
+If the base_path cannot be prepended, then simply return the original input value.</p>
+<ul>
+<li><code>possible_relative_path</code>: A string potentially indicating a relative file/directory path. </li>
+<li><code>base_path</code>: The base path to prepend.</li>
+<li><code>return</code>: Modified path string.</li>
+</ul>
+<pre><code class="py">def convert_to_absolute_path(possible_relative_path, base_path):
+    converted_value = possible_relative_path
+    try:
+        if not os.path.isabs(possible_relative_path):
+            joined_path = os.path.join(base_path, possible_relative_path)
+            if os.path.isfile(joined_path) or os.path.isdir(joined_path):
+                converted_value = joined_path
+
+    except Exception, e:
+        pass
+
+    return converted_value
+</code></pre>
+
+<h3 id="make-paths-absolute">Make paths absolute</h3>
+<p>Processes the input dictionary, converting relative file paths to absolute
+file paths throughout the dictionary structure.</p>
+<ul>
+<li>Specifically, for each value in the dictionary:<ul>
+<li>If it is also a dictionary, then recursively apply this function,
+replacing the initial dictionary.</li>
+</ul>
+</li>
+<li>Otherwise:<ul>
+<li>If the value is a non-null string that is not already an absolute path, then try prepending the specified base_path and see if the resulting file name exists, and in that case then replace the string with the resulting absolute path.</li>
+</ul>
+</li>
+</ul>
+<pre><code class="py">def make_paths_absolute(input_dict, base_path):
+    for curr_key, curr_value in input_dict.items():
+        if isinstance(curr_value, dict):
+            input_dict[curr_key] = make_paths_absolute(curr_value, base_path)
+        else:
+            converted_value = convert_to_absolute_path(curr_value, base_path)
+            input_dict[curr_key] = converted_value
+
+    return input_dict
+</code></pre>
+
+<h3 id="load-reference">load reference</h3>
+<p>Processes the input genomic reference data JSON file, converting relative file paths
+to absolute paths where required.</p>
+<ul>
+<li><code>ref</code> Input reference file configuration JSON file.</li>
+<li><code>return</code> Modified reference file dictionary with relative-&gt;absolute file path conversions performed.</li>
+</ul>
+<p><code>autoseq-genome.json</code> file which is generated by <code>generate-ref</code> command</p>
+<pre><code class="py">def load_ref(ref):
+    basepath = os.path.dirname(ref)
+    with open(ref, 'r') as fh:
+        refjson = json.load(fh)
+        refjson_abs = make_paths_absolute(refjson, basepath)
+        return refjson_abs
+</code></pre>
+
+<h3 id="get-runner">get runner</h3>
+<p>The runner module imported from pypedream. Here default runner is shellrunner. Based on the environment setup, It will return the runner.</p>
+<pre><code class="py">def get_runner(runner_name, maxcores):
+    try:
+        module = __import__(&quot;pypedream.runners.&quot; + runner_name, fromlist=&quot;runners&quot;)
+        runner_class = getattr(module, runner_name.title())
+
+        if runner_name == 'localqrunner':
+            runner = runner_class(maxcores)
+        else:
+            runner = runner_class()
+        return runner
+    except ImportError:
+        print &quot;Couldn't find runner &quot; + runner_name + &quot;. Available Runners:&quot;
+        import inspect
+        for name, obj in inspect.getmembers(runners):
+            if name != &quot;runner&quot; and &quot;runner&quot; in name:
+                print &quot;- &quot; + name
+        raise ImportError
+</code></pre>
+
+<h3 id="setup-logging">setup logging</h3>
+<p>Set up logging
+ * <code>loglevel</code> loglevel to use, one of ERROR, WARNING, DEBUG, INFO (default INFO)</p>
+<pre><code class="py">def setup_logging(loglevel=&quot;INFO&quot;):
+    numeric_level = getattr(logging, loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % loglevel)
+    logging.basicConfig(level=numeric_level,
+                        format='%(levelname)s %(asctime)s %(funcName)s - %(message)s')
+    logging.info(&quot;Started log with loglevel %(loglevel)s&quot; % {&quot;loglevel&quot;: loglevel})
+</code></pre>
+
+<h3 id="commands">Commands</h3>
+<ul>
+<li><code>alascca</code> - call the alascca pipeline</li>
+<li><code>liqbio</code> - call the liqbio pipeline</li>
+<li><code>liqbio_prepare</code> - generate the sample json file based on clinseq barcodes</li>
+</ul>
+<pre><code class="py">cli.add_command(alascca_cmd)
+cli.add_command(liqbio_cmd)
+cli.add_command(liqbio_prepare_cmd)
+</code></pre>
+
+<h3 id="alascca">alascca</h3>
+<p>Alascca Pipline </p>
+<pre><code class="py">@click.command()
+@click.argument('sample', type=click.File('r'))
+@click.pass_context
+def alascca(ctx, sample):
+    logging.info(&quot;Running Alascca pipeline&quot;)
+    logging.info(&quot;sample is {}&quot;.format(sample))
+
+    logging.debug(&quot;Reading sample config from {}&quot;.format(sample))
+    sampledata = json.load(sample)
+
+    if ctx.obj['jobdb']:
+        mkdir(os.path.dirname(ctx.obj['jobdb']))
+
+    ctx.obj['pipeline'] = AlasccaPipeline(sampledata=sampledata,
+                                          refdata=ctx.obj['refdata'],
+                                          job_params=ctx.obj['job_params'],
+                                          outdir=ctx.obj['outdir'],
+                                          libdir=ctx.obj['libdir'],
+                                          maxcores=ctx.obj['cores'],
+                                          runner=ctx.obj['runner'],
+                                          jobdb=ctx.obj['jobdb'],
+                                          dot_file=ctx.obj['dot_file'],
+                                          scratch=ctx.obj['scratch']
+                                          )
+
+    # start main analysis
+    ctx.obj['pipeline'].start()
+
+    logging.info(&quot;Waiting for AlasccaPipeline to finish.&quot;)
+    while ctx.obj['pipeline'].is_alive():
+        logging.debug(&quot;Waiting for AutoseqPipeline&quot;)
+        time.sleep(5)
+
+    # return_code from run_pipeline() will be != 0 if the pipeline fails
+    sys.exit(ctx.obj['pipeline'].exitcode)
+</code></pre>
+
+<h3 id="liqbio">liqbio</h3>
+<pre><code class="py">
+@click.command()
+@click.argument('sample', type=click.File('r'))
+@click.pass_context
+def liqbio(ctx, sample):
+    logging.info(&quot;Running Liquid Biopsy pipeline&quot;)
+    logging.info(&quot;Sample is {}&quot;.format(sample))
+
+    logging.debug(&quot;Reading sample config from {}&quot;.format(sample))
+    sampledata = json.load(sample)
+
+    if ctx.obj['jobdb']:
+        mkdir(os.path.dirname(ctx.obj['jobdb']))
+
+    ctx.obj['pipeline'] = LiqBioPipeline(sampledata=sampledata,
+                                         refdata=ctx.obj['refdata'],
+                                         job_params=ctx.obj['job_params'],
+                                         outdir=ctx.obj['outdir'],
+                                         libdir=ctx.obj['libdir'],
+                                         maxcores=ctx.obj['cores'],
+                                         runner=ctx.obj['runner'],
+                                         jobdb=ctx.obj['jobdb'],
+                                         dot_file=ctx.obj['dot_file'],
+                                         umi=ctx.obj['umi'],
+                                         scratch=ctx.obj['scratch'])
+
+    # start main analysis
+    ctx.obj['pipeline'].start()
+    #
+    logging.info(&quot;Waiting for pipeline to finish.&quot;)
+    while ctx.obj['pipeline'].is_alive():
+        logging.debug(&quot;Waiting for LiqBioPipeline&quot;)
+        time.sleep(5)
+
+    # # return_code from run_pipeline() will be != 0 if the pipeline fails
+    sys.exit(ctx.obj['pipeline'].exitcode)
+</code></pre>
+
+<h3 id="liqbio_prepare">liqbio_prepare</h3>
+<p>It will read the input file with clinseq barcodes (txt or xlxs) and return the json file for analysis</p>
+<ul>
+<li>output: sample-id.json file </li>
+</ul>
+<pre><code class="py">@click.command()
+@click.option('--outdir', required=True, help=&quot;directory to write config files&quot;)
+@click.argument('barcodes-filename', type=str)
+@click.pass_context
+def liqbio_prepare(ctx, outdir, barcodes_filename):
+    logging.info(&quot;Extracting clinseq barcodes from input file: &quot; + barcodes_filename)
+    clinseq_barcodes = extract_clinseq_barcodes(barcodes_filename)
+
+    logging.info(&quot;Validating all clinseq barcodes.&quot;)
+    validate_clinseq_barcodes(clinseq_barcodes)
+
+    logging.info(&quot;Generating sample dictionary from the input clinseq barcode strings.&quot;)
+    sample_dict = convert_barcodes_to_sampledict(clinseq_barcodes)
+    for sdid in sample_dict:
+        fn = &quot;{}/{}.json&quot;.format(outdir, sdid)
+        with open(fn, 'w') as f:
+            json.dump(sample_dict[sdid], f, sort_keys=True, indent=4)
+
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

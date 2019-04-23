@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Variantcalling - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Variantcalling";
+    var mkdocs_page_input_path = "lld/variantcalling.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Variantcalling</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h3 id="call_somatic_variants">call_somatic_variants</h3>
+<p>Configuring calling of somatic variants on a given pairing of cancer and normal bam files,
+using a set of specified algorithms.</p>
+<ul>
+<li>pipeline: The analysis pipeline for which to configure somatic calling.</li>
+<li>cancer_bam: Location of the cancer sample bam file</li>
+<li>normal_bam: Location of the normal sample bam file</li>
+<li>cancer_capture: A UniqueCapture item identifying the cancer sample library capture </li>
+<li>normal_capture: A UniqueCapture item identifying the normal sample library capture</li>
+<li>target_name: The name of the capture panel used</li>
+<li>outdir: Output location</li>
+<li>callers: List of calling algorithms to use - can include 'vardict' and/or 'freebayes'</li>
+<li>min_alt_frac: The minimum allelic fraction value in order to retain a called variant </li>
+<li>return: A dictionary with somatic caller name as key and corresponding output file location as value</li>
+</ul>
+<pre><code class="py">def call_somatic_variants(pipeline, cancer_bam, normal_bam, cancer_capture, normal_capture,
+                          target_name, outdir, callers=['vardict'],
+                          min_alt_frac=0.1, min_num_reads=None):
+    cancer_capture_str = compose_lib_capture_str(cancer_capture)
+    normal_capture_str = compose_lib_capture_str(normal_capture)
+    normal_sample_str = compose_sample_str(normal_capture)
+    tumor_sample_str = compose_sample_str(cancer_capture)
+
+    d = {}
+    if 'freebayes' in callers:
+        freebayes = Freebayes()
+        freebayes.input_bams = [cancer_bam, normal_bam]
+        freebayes.tumorid = cancer_capture_str
+        freebayes.normalid = normal_capture_str
+        freebayes.somatic_only = True
+        freebayes.reference_sequence = pipeline.refdata['reference_genome']
+        freebayes.target_bed = pipeline.refdata['targets'][target_name]['targets-bed-slopped20']
+        freebayes.threads = pipeline.maxcores
+        freebayes.min_alt_frac = min_alt_frac
+        freebayes.scratch = pipeline.scratch
+        freebayes.jobname = &quot;freebayes-somatic/{}&quot;.format(cancer_capture_str)
+        freebayes.output = &quot;{}/variants/{}-{}.freebayes-somatic.vcf.gz&quot;.format(outdir, cancer_capture_str, normal_capture_str)
+        pipeline.add(freebayes)
+        d['freebayes'] = freebayes.output
+
+    capture_name = pipeline.get_capture_name(cancer_capture.capture_kit_id)
+    blacklist_bed = pipeline.refdata[&quot;targets&quot;][capture_name][&quot;blacklist-bed&quot;]
+
+    if 'vardict' in callers:
+        vardict = VarDict(input_tumor=cancer_bam, input_normal=normal_bam, tumorid=tumor_sample_str,
+                          normalid=normal_sample_str,
+                          reference_sequence=pipeline.refdata['reference_genome'],
+                          reference_dict=pipeline.refdata['reference_dict'],
+                          target_bed=pipeline.refdata['targets'][target_name]['targets-bed-slopped20'][:-3],
+                          output=&quot;{}/variants/vardict/{}-{}.vardict-somatic.vcf.gz&quot;.format(outdir, cancer_capture_str, normal_capture_str),
+                          min_alt_frac=min_alt_frac, min_num_reads=min_num_reads,
+                          blacklist_bed=blacklist_bed
+                          )
+
+        vardict.jobname = &quot;vardict/{}&quot;.format(cancer_capture_str)
+        pipeline.add(vardict)
+        d['vardict'] = vardict.output
+
+
+    return d
+</code></pre>
+
+<h3 id="freebayes">Freebayes</h3>
+<p>Freebayes is a bayesian haplotype-based genetic polymorphism discovery and genotyping.</p>
+<pre><code class="py">class Freebayes(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_bams = None
+        self.reference_sequence = None
+        self.target_bed = None
+        self.somatic_only = False
+        self.params = &quot;--pooled-discrete --pooled-continuous --genotype-qualities --report-genotype-likelihood-max --allele-balance-priors-off&quot;
+        self.min_coverage = 20
+        self.min_alt_frac = 0.01
+        self.use_harmonic_indel_quals = False
+        self.output = &quot;&quot;
+        self.jobname = &quot;freebayes-somatic&quot;
+
+    def command(self):
+        regions_file = &quot;{scratch}/{uuid}.regions&quot;.format(scratch=self.scratch, uuid=uuid.uuid4())
+        bed_to_regions_cmd = &quot;cat {} | bed_to_regions.py &gt; {}&quot;.format(self.target_bed, regions_file)
+
+        call_somatic_cmd = &quot; | {} -c 'from autoseq.util.bcbio import call_somatic; import sys; print call_somatic(sys.stdin.read())' &quot;.format(
+            sys.executable)
+
+        freebayes_cmd = &quot;freebayes-parallel {} {} &quot;.format(regions_file, self.threads) + \
+                        required(&quot;-f &quot;, self.reference_sequence) + &quot; --use-mapping-quality &quot; + \
+                        optional(&quot;--min-alternate-fraction &quot;, self.min_alt_frac) + \
+                        optional(&quot;--min-coverage &quot;, self.min_coverage) + \
+                        conditional(self.use_harmonic_indel_quals, &quot;--harmonic-indel-quality&quot;) + \
+                        optional(&quot;&quot;, self.params) + \
+                        repeat(&quot; &quot;, self.input_bams) + \
+                        &quot;&quot;&quot;| bcftools filter -i 'ALT=&quot;&lt;*&gt;&quot; || QUAL &gt; 5' &quot;&quot;&quot; + \
+                        &quot;| filter_erroneus_alt.py -V /dev/stdin &quot; + \
+                        conditional(self.somatic_only, call_somatic_cmd) + \
+                        &quot; | &quot; + vt_split_and_leftaln(self.reference_sequence) + \
+                        &quot; | vcfuniq | bcftools view --apply-filters .,PASS &quot; + \
+                        &quot; | bgzip &gt; {output} &amp;&amp; tabix -p vcf {output}&quot;.format(output=self.output)
+        # reason for 'vcfuniq': freebayes sometimes report duplicate variants that need to be uniqified.
+        rm_regions_cmd = &quot;rm {}&quot;.format(regions_file)
+        return &quot; &amp;&amp; &quot;.join([bed_to_regions_cmd, freebayes_cmd, rm_regions_cmd])
+</code></pre>
+
+<h3 id="vardict">VarDict</h3>
+<p>VarDict is an ultra sensitive variant caller for both single and paired sample variant calling from BAM files. VarDict implements several novel features such as amplicon bias aware variant calling from targeted sequencing experiments, rescue of long indels by realigning bwa soft clipped reads and better scalability than many Java based variant callers.</p>
+<pre><code class="py">class VarDict(Job):
+    def __init__(self, input_tumor=None, input_normal=None, tumorid=None, normalid=None, reference_sequence=None,
+                 reference_dict=None, target_bed=None, output=None, min_alt_frac=0.1, min_num_reads=None,
+                 blacklist_bed=None):
+        Job.__init__(self)
+        self.input_tumor = input_tumor
+        self.input_normal = input_normal
+        self.tumorid = tumorid
+        self.normalid = normalid
+        self.reference_sequence = reference_sequence
+        self.reference_dict = reference_dict
+        self.target_bed = target_bed
+        self.blacklist_bed = blacklist_bed
+        self.output = output
+        self.min_alt_frac = min_alt_frac
+        self.min_num_reads = min_num_reads
+
+    def command(self):
+        required(&quot;&quot;, self.input_tumor)
+        required(&quot;&quot;, self.input_normal)
+
+        freq_filter = (&quot; bcftools filter -e 'STATUS !~ \&quot;.*Somatic\&quot;' 2&gt; /dev/null &quot;
+                       &quot;| %s -c 'from autoseq.util.bcbio import depth_freq_filter_input_stream; import sys; print depth_freq_filter_input_stream(sys.stdin, %s, \&quot;%s\&quot;)' &quot; %
+                       (sys.executable, 0, 'bwa'))
+
+        somatic_filter = (&quot; sed 's/\\.*Somatic\\\&quot;/Somatic/' &quot;  # changes \&quot;.*Somatic\&quot; to Somatic
+                          &quot;| sed 's/REJECT,Description=\&quot;.*\&quot;&gt;/REJECT,Description=\&quot;Not Somatic via VarDict\&quot;&gt;/' &quot;
+                          &quot;| %s -c 'from autoseq.util.bcbio import call_somatic; import sys; print call_somatic(sys.stdin.read())' &quot; % sys.executable)
+
+        blacklist_filter = &quot; | intersectBed -a . -b {} | &quot;.format(self.blacklist_bed)
+
+        cmd = &quot;vardict-java &quot; + required(&quot;-G &quot;, self.reference_sequence) + \
+              optional(&quot;-f &quot;, self.min_alt_frac) + \
+              required(&quot;-N &quot;, self.tumorid) + \
+              optional(&quot;-r &quot;, self.min_num_reads) + \
+              &quot; -b \&quot;{}|{}\&quot; &quot;.format(self.input_tumor, self.input_normal) + \
+              &quot; -c 1 -S 2 -E 3 -g 4 -Q 10 &quot; + required(&quot;&quot;, self.target_bed) + \
+              &quot; | testsomatic.R &quot; + \
+              &quot; | var2vcf_paired.pl -P 0.9 -m 4.25 -M &quot; + required(&quot;-f &quot;, self.min_alt_frac) + \
+              &quot; -N \&quot;{}|{}\&quot; &quot;.format(self.tumorid, self.normalid) + \
+              &quot; | &quot; + freq_filter + &quot; | &quot; + somatic_filter + &quot; | &quot; + fix_ambiguous_cl() + &quot; | &quot; + remove_dup_cl() + \
+              &quot; | vcfstreamsort -w 1000 &quot; + \
+              &quot; | &quot; + vt_split_and_leftaln(self.reference_sequence) + \
+              &quot; | bcftools view --apply-filters .,PASS &quot; + \
+              &quot; | vcfsorter.pl {} /dev/stdin &quot;.format(self.reference_dict) + \
+              conditional(blacklist_filter, self.blacklist_bed) + \
+              &quot; | bgzip &gt; {output} &amp;&amp; tabix -p vcf {output}&quot;.format(output=self.output)
+        return cmd
+</code></pre>
+
+<h3 id="vardictforpurecn">VarDictForPureCN</h3>
+<p>VarDict is used to generate vcf file which is can be given as input for PureCN to identify tumor purity.</p>
+<pre><code class="py">class VarDictForPureCN(Job):
+    def __init__(self, input_tumor=None, input_normal=None, tumorid=None, normalid=None, reference_sequence=None,
+                 reference_dict=None, target_bed=None, output=None, min_alt_frac=0.1, min_num_reads=None, dbsnp=None):
+        Job.__init__(self)
+        self.input_tumor = input_tumor
+        self.input_normal = input_normal
+        self.tumorid = tumorid
+        self.normalid = normalid
+        self.reference_sequence = reference_sequence
+        self.reference_dict = reference_dict
+        self.target_bed = target_bed
+        self.output = output
+        self.min_alt_frac = min_alt_frac
+        self.min_num_reads = min_num_reads
+        self.dbsnp = dbsnp
+
+    def command(self):
+        required(&quot;&quot;, self.input_tumor)
+        required(&quot;&quot;, self.input_normal)
+
+        tmp_vcf = &quot;{scratch}/{uuid}.vcf.gz&quot;.format(scratch=self.scratch, uuid=uuid.uuid4())
+
+        # run vardict without removing non-somatic variants, and adding &quot;SOMATIC&quot; INFO field for somatic variants
+        vardict_cmd = &quot;vardict-java &quot; + required(&quot;-G &quot;, self.reference_sequence) + \
+                      optional(&quot;-f &quot;, self.min_alt_frac) + \
+                      required(&quot;-N &quot;, self.tumorid) + \
+                      optional(&quot;-r &quot;, self.min_num_reads) + \
+                      &quot; -b \&quot;{}|{}\&quot; &quot;.format(self.input_tumor, self.input_normal) + \
+                      &quot; -c 1 -S 2 -E 3 -g 4 -Q 10 &quot; + required(&quot;&quot;, self.target_bed) + \
+                      &quot; | testsomatic.R &quot; + \
+                      &quot; | var2vcf_paired.pl -P 0.9 -m 4.25 &quot; + required(&quot;-f &quot;, self.min_alt_frac) + \
+                      &quot; -N \&quot;{}|{}\&quot; &quot;.format(self.tumorid, self.normalid) + \
+                      &quot; | &quot; + fix_ambiguous_cl() + &quot; | &quot; + remove_dup_cl() + \
+                      &quot; | sed 's/Somatic;/Somatic;SOMATIC;/g' &quot; + \
+                      &quot; | sed '/^#CHROM/i ##INFO=&lt;ID=SOMATIC,Number=0,Type=Flag,Description=\&quot;Somatic event\&quot;&gt;' &quot; + \
+                      &quot; | vcfstreamsort -w 1000 &quot; + \
+                      &quot; | bcftools view --apply-filters .,PASS &quot; + \
+                      &quot; | vcfsorter.pl {} /dev/stdin &quot;.format(self.reference_dict) + \
+                      &quot; | bgzip &gt; &quot; + tmp_vcf + &quot; &amp;&amp; tabix -p vcf &quot; + tmp_vcf
+
+        # annotate variants with dbSNP id
+        annotate_cmd = &quot;bcftools annotate --annotation {} --columns ID &quot;.format(self.dbsnp) + \
+                       &quot; --output-type z --output {} &quot;.format(self.output) + tmp_vcf + \
+                       &quot; &amp;&amp; tabix -p vcf {}&quot;.format(self.output)
+
+        # remove temporary vcf and tabix
+        rm_tmp_cmd = &quot;rm &quot; + tmp_vcf + &quot;*&quot;
+
+        return &quot; &amp;&amp; &quot;.join([vardict_cmd, annotate_cmd, rm_tmp_cmd])
+</code></pre>
+
+<h3 id="vep">VEP</h3>
+<p>VEP is a annotation tool, adds clinical significance information to INFO colum in vcf file using CSQ tag. CSQ tag can be used to filter out variants based on multiple features.</p>
+<pre><code class="py">class VEP(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_vcf = None
+        self.output_vcf = None
+        self.reference_sequence = None
+        self.vep_dir = None
+        self.brca_exchange_vcf = None
+        self.jobname = &quot;vep&quot;
+        self.additional_options = &quot;&quot;
+
+    def command(self):
+
+        fork = &quot;&quot;
+        if self.threads &gt; 1:  # vep does not accept &quot;--fork 1&quot;, so need to check.
+            fork = &quot; --fork {} &quot;.format(self.threads)
+
+        cmdstr = &quot;vep --vcf --output_file STDOUT &quot; + \
+                 self.additional_options + required(&quot;--dir &quot;, self.vep_dir) + \
+                 required(&quot;--fasta &quot;, self.reference_sequence) + \
+                 required(&quot;-i &quot;, self.input_vcf) + \
+                 &quot; --check_existing  --total_length --allele_number &quot; + \
+                 &quot; --no_escape --no_stats --everything --offline &quot; + \
+                 &quot; --custom {},,vcf,exact,0,ClinicalSignificance &quot;.format(self.brca_exchange_vcf) + \
+                 fork + &quot; &gt; &quot; + required(&quot;&quot;, self.output_vcf) 
+                 # &quot; &amp;&amp; tabix -p vcf {}&quot;.format(self.output_vcf)
+
+        return cmdstr
+</code></pre>
+
+<h3 id="vcfaddsample">VcfAddSample</h3>
+<p>Add DP, RO and AO tags for a new sample to a VCF, filter low-qual variants on the fly</p>
+<pre><code class="py">class VcfAddSample(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_vcf = None
+        self.input_bam = None
+        self.samplename = None
+        self.filter_hom = True
+        self.output = None
+        self.jobname = &quot;vcf-add-sample&quot;
+
+    def command(self):
+        filt_vcf = &quot;{scratch}/{uuid}.vcf.gz&quot;.format(scratch=self.scratch, uuid=uuid.uuid4())
+        bgzip = &quot;&quot;
+        tabix = &quot;&quot;
+        if self.output.endswith('gz'):
+            bgzip = &quot;| bgzip&quot;
+            tabix = &quot; &amp;&amp; tabix -p vcf {}&quot;.format(self.output)
+
+        filt_vcf_cmd = &quot;vcf_filter.py --no-filtered &quot; + required(&quot;&quot;, self.input_vcf) + &quot; sq --site-quality 5 &quot; + \
+                       &quot;|bgzip&quot; + &quot; &gt; &quot; + filt_vcf
+        vcf_add_sample_cmd = &quot;vcf_add_sample.py &quot; + \
+                             conditional(self.filter_hom, &quot;--filter_hom&quot;) + \
+                             required(&quot;--samplename &quot;, self.samplename) + \
+                             filt_vcf + &quot; &quot; + \
+                             required(&quot;&quot;, self.input_bam) + \
+                             bgzip + &quot; &gt; &quot; + self.output + tabix
+        rm_filt_cmd = &quot;rm &quot; + filt_vcf
+        return &quot; &amp;&amp; &quot;.join([filt_vcf_cmd, vcf_add_sample_cmd, rm_filt_cmd])
+</code></pre>
+
+<h3 id="svcaller">SVcaller</h3>
+<p>SVcaller is in-house structural variant caller based on delly algorithym with strigent filters.</p>
+<pre><code class="py">class Svcaller(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_bam = None
+        self.event_type = None
+        self.output_bam = None
+        self.output_gtf = None
+        self.reference_sequence = None
+        self.scratch = None
+        self.jobname = &quot;svcaller-run-all&quot;
+
+    def command(self):
+
+        activate_env_cmd = &quot;source activate svcallerenv &quot;
+
+        run_all_cmd = (&quot;svcaller run-all --tmp-dir {scratch} &quot; +
+                      &quot;--event-type {event_type} &quot; +
+                      &quot;--fasta-filename {reference_seq} &quot; +
+                      &quot;--filter-event-overlap --events-gtf {output_gtf} &quot;
+                      &quot;--events-bam {output_bam} {input_bam}&quot;).format(
+                          scratch=self.scratch,
+                          event_type=self.event_type,
+                          reference_seq=self.reference_sequence,
+                          output_gtf=self.output_gtf,
+                          output_bam=self.output_bam,
+                          input_bam=self.input_bam,
+                      )
+
+        deactivate_env_cmd = &quot;source deactivate&quot;
+
+        return &quot;{} &amp;&amp; {} &amp;&amp; {}&quot;.format(
+            activate_env_cmd,
+            run_all_cmd,
+            deactivate_env_cmd,
+        )
+</code></pre>
+
+<pre><code class="py">class Sveffect(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_del_gtf = None
+        self.input_dup_gtf = None
+        self.input_inv_gtf = None
+        self.input_tra_gtf = None
+        self.ts_regions = None
+        self.ar_regions = None
+        self.fusion_regions = None
+        self.output_combined_bed = None
+        self.output_effects_json = None
+        self.jobname = &quot;sveffect&quot;
+
+    def command(self):
+
+        activate_env_cmd = &quot;source activate svcallerenv &quot;
+        make_bed_cmd = (&quot;sveffect make-bed &quot; +
+                       &quot;--del-gtf {del_gtf} &quot; +
+                       &quot;--dup-gtf {dup_gtf} &quot; +
+                       &quot;--inv-gtf {inv_gtf} &quot; +
+                       &quot;--tra-gtf {tra_gtf} &quot; +
+                       &quot;{output_combined_bed}&quot;).format(
+                           del_gtf=self.input_del_gtf,
+                           dup_gtf=self.input_dup_gtf,
+                           inv_gtf=self.input_inv_gtf,
+                           tra_gtf=self.input_tra_gtf,
+                           output_combined_bed=self.output_combined_bed
+                       )
+
+        predict_cmd = (&quot;sveffect predict &quot; +
+                      &quot;--ts-regions {ts_regions} &quot; +
+                      &quot;--ar-regions {ar_regions} &quot; +
+                      &quot;--fusion-regions {fusion_regions} &quot; +
+                      &quot;--effects-filename {output_effects_json} {combined_effects_bed}&quot;).format(
+                          ts_regions=self.ts_regions,
+                          ar_regions=self.ar_regions,
+                          fusion_regions=self.fusion_regions,
+                          output_effects_json=self.output_effects_json,
+                          combined_effects_bed=self.output_combined_bed,
+                      )
+
+        deactivate_env_cmd = &quot;source deactivate&quot;
+
+        return &quot;{} &amp;&amp; {} &amp;&amp; {} &amp;&amp; {}&quot;.format(
+            activate_env_cmd,
+            make_bed_cmd,
+            predict_cmd,
+            deactivate_env_cmd,
+        )
+
+</code></pre>
+
+<h3 id="cnv-calling">CNV calling</h3>
+<hr />
+<p>Copy Number Variation is called by cnvkit</p>
+<pre><code class="py">class CNVkit(Job):
+    &quot;&quot;&quot;Runs CNVkit. Either reference or targets_bed must be supplied&quot;&quot;&quot;
+
+    def __init__(self, input_bam, output_cns, output_cnr, reference=None,
+                 targets_bed=None, scratch=&quot;/tmp&quot;, fasta=None):
+        self.input_bam = input_bam
+        self.reference = reference
+        self.fasta = fasta
+        self.output_cnr = output_cnr
+        self.output_cns = output_cns
+        self.targets_bed = targets_bed
+        self.scratch = scratch
+        self.jobname = &quot;cnvkit&quot;
+
+    def command(self):
+        if not self.reference and not self.targets_bed:
+            raise ValueError(&quot;Either reference or targets_bed must be supplied&quot;)
+        if self.reference and self.targets_bed:
+            raise ValueError(&quot;Supply either reference OR targets_bed&quot;)
+
+        tmpdir = &quot;{}/cnvkit-{}&quot;.format(self.scratch, uuid.uuid4())
+        sample_prefix = stripsuffix(os.path.basename(self.input_bam), &quot;.bam&quot;)
+        cnvkit_cmd = &quot;cnvkit.py batch &quot; + required(&quot;&quot;, self.input_bam) + \
+                     optional(&quot;-r &quot;, self.reference) + \
+                     conditional(self.targets_bed, &quot;--fasta &quot; + str(self.fasta) ) + \
+                     conditional(self.targets_bed, &quot;-n&quot;) + \
+                     optional(&quot;-t &quot;, self.targets_bed) + \
+                     required(&quot;-d &quot;, tmpdir)
+        copy_cns_cmd = &quot;cp {}/{}.cns &quot;.format(tmpdir, sample_prefix) + required(&quot; &quot;, self.output_cns)
+        copy_cnr_cmd = &quot;cp {}/{}.cnr &quot;.format(tmpdir, sample_prefix) + required(&quot; &quot;, self.output_cnr)
+        rm_cmd = &quot;rm -r {}&quot;.format(tmpdir)
+        return &quot; &amp;&amp; &quot;.join([cnvkit_cmd, copy_cns_cmd, copy_cnr_cmd, rm_cmd])
+</code></pre>
+
+<p>Fixes the output of CNV-kit, using a specified table of reference data that should be
+specific to the sample type, capture kit, and library prep kit.</p>
+<pre><code class="py">class CNVkitFix(Job):
+    def __init__(self, input_cnr, input_cns, input_ref, output_cnr, output_cns):
+        self.input_cnr = input_cnr
+        self.input_cns = input_cns
+        self.input_ref = input_ref
+        self.output_cns = output_cns
+        self.output_cnr = output_cnr
+        self.jobname = &quot;cnvkit-fix&quot;
+
+    def command(self):
+        return (&quot;fix_cnvkit.py --input-cnr {input_cnr} --input-cns {input_cns} &quot; +
+                &quot;--input-reference {input_ref} --output-cnr {output_cnr} &quot; +
+                &quot;--output-cns {output_cns}&quot;).format(
+                   input_cnr=self.input_cnr,
+                   input_cns=self.input_cns,
+                   input_ref=self.input_ref,
+                   output_cns=self.output_cns,
+                   output_cnr=self.output_cnr)
+</code></pre>
+
+<p>Converts CNVkit segment format (.cns files) to DNAcopy segment format (.seg files). </p>
+<pre><code class="py">class Cns2Seg(Job):
+
+
+    def __init__(self, input_cns, output_seg):
+        self.input_cns = input_cns
+        self.output_seg = output_seg
+
+    def command(self):
+        cmd = &quot;cnvkit.py export seg &quot; + required(&quot;-o &quot;, self.output_seg) + required(&quot;&quot;, self.input_cns)
+        return cmd
+</code></pre>
+
+<h3 id="qdnaseq">QDNASeq</h3>
+<pre><code class="py">class QDNASeq(Job):
+    def __init__(self, input_bam, output_segments, background=None):
+        Job.__init__(self)
+        self.input = input_bam
+        self.output = output_segments
+        self.background = background
+        self.jobname = &quot;qdnaseq&quot;
+
+    def command(self):
+        activate_env_cmd = &quot;source activate qdnaseqenv&quot;
+
+        qdnaseq_cmd = &quot;qdnaseq.R &quot; + \
+                      required(&quot;--bam &quot;, self.input) + \
+                      required(&quot;--output &quot;, self.output) + \
+                      optional(&quot;--background &quot;, self.background)
+
+        deactivate_env_cmd = &quot;source deactivate&quot;
+
+        return &quot;{} &amp;&amp; {} &amp;&amp; {} &quot;.format(
+            activate_env_cmd,
+            qdnaseq_cmd,
+            deactivate_env_cmd,
+        )
+</code></pre>
+
+<pre><code class="py">class QDNASeq2Bed(Job):
+    def __init__(self, input_segments, output_bed, genes_gtf):
+        Job.__init__(self)
+        self.input_segments = input_segments
+        self.output_bed = output_bed
+        self.genes_gtf = genes_gtf
+
+    def command(self):
+        qdnaseq2bed_cmd = &quot;qdnaseq2bed.py -n segments &quot; + \
+                          required(&quot;-i &quot;, self.input_segments) + \
+                          &quot;| sort -k1,1 -k2,2n &quot; + \
+                          &quot;| bedtools median -c 5 -o mean &quot; + \
+                          required(&quot;-a &quot;, self.genes_gtf) + &quot; -b - &quot; + \
+                          &quot;| cnvgtf2bed.py -i /dev/stdin -n gene_id &quot; + \
+                          required(&quot;&gt; &quot;, self.output_bed)
+        return qdnaseq2bed_cmd
+</code></pre>
+
+<h3 id="alasccacnaplot">AlasccaCNAPlot</h3>
+<pre><code class="py">class AlasccaCNAPlot(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_cnr = None
+        self.input_cns = None
+        self.input_germline_vcf = None
+        self.input_somatic_vcf = None
+        self.chrsizes = None
+        self.output_png = None
+        self.output_cna = None
+        self.output_purity = None
+        self.jobname = &quot;alascca-cna&quot;
+
+    def command(self):
+        return &quot;alasccaCNA.R &quot; + \
+               required(&quot;--cnr &quot;, self.input_cnr) + \
+               required(&quot;--cns &quot;, self.input_cns) + \
+               required(&quot;--germlinevcf &quot;, self.input_germline_vcf) + \
+               required(&quot;--somaticvcf &quot;, self.input_somatic_vcf) + \
+               required(&quot;--chrsizes &quot;, self.chrsizes) + \
+               required(&quot;--png &quot;, self.output_png) + \
+               required(&quot;--json.cna &quot;, self.output_cna) + \
+               required(&quot;--json.purity &quot;, self.output_purity)
+</code></pre>
+
+<h3 id="liqbiocnaplot">LiqbioCNAPlot</h3>
+<pre><code class="py">class LiqbioCNAPlot(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_tumor_cnr = None
+        self.input_tumor_cns = None
+        self.input_normal_cnr = None
+        self.input_normal_cns = None
+        self.input_het_snps_vcf = None
+        self.input_purecn_csv = None
+        self.input_purecn_genes_csv = None
+        self.input_purecn_loh_csv = None
+        self.input_purecn_variants_csv = None
+        self.input_svcaller_T_DEL = None
+        self.input_svcaller_T_DUP = None
+        self.input_svcaller_T_INV = None
+        self.input_svcaller_T_TRA = None
+        self.input_svcaller_N_DEL = None
+        self.input_svcaller_N_DUP = None
+        self.input_svcaller_N_INV = None
+        self.input_svcaller_N_TRA = None
+        self.input_germline_mut_vcf = None
+        self.input_somatic_mut_vcf = None
+        self.output_plot_png = None
+        self.output_cna_json = None
+        self.output_purity_json = None
+
+        self.jobname = &quot;liqbio-cna&quot;
+
+    def command(self):
+        return &quot;liqbioCNA.R&quot; + \
+        required(&quot;--tumor_cnr &quot;, self.input_tumor_cnr) + \
+        required(&quot;--tumor_cns &quot;, self.input_tumor_cns) + \
+        required(&quot;--normal_cnr &quot;, self.input_normal_cnr) + \
+        required(&quot;--normal_cns &quot;, self.input_normal_cns) + \
+        required(&quot;--het_snps_vcf &quot;, self.input_het_snps_vcf) + \
+        required(&quot;--purecn_csv &quot;, self.input_purecn_csv) + \
+        required(&quot;--purecn_genes_csv &quot;, self.input_purecn_genes_csv) + \
+        required(&quot;--purecn_loh_csv &quot;, self.input_purecn_loh_csv) + \
+        required(&quot;--purecn_variants_csv &quot;, self.input_purecn_variants_csv) + \
+        required(&quot;--svcaller_T_DEL &quot;, self.input_svcaller_T_DEL) + \
+        required(&quot;--svcaller_T_DUP &quot;, self.input_svcaller_T_DUP) + \
+        required(&quot;--svcaller_T_INV &quot;, self.input_svcaller_T_INV) + \
+        required(&quot;--svcaller_T_TRA &quot;, self.input_svcaller_T_TRA) + \
+        required(&quot;--svcaller_N_DEL &quot;, self.input_svcaller_N_DEL) + \
+        required(&quot;--svcaller_N_DUP &quot;, self.input_svcaller_N_DUP) + \
+        required(&quot;--svcaller_N_INV &quot;, self.input_svcaller_N_INV) + \
+        required(&quot;--svcaller_N_TRA &quot;, self.input_svcaller_N_TRA) + \
+        required(&quot;--germline_mut_vcf &quot;, self.input_germline_mut_vcf) + \
+        required(&quot;--somatic_mut_vcf &quot;, self.input_somatic_mut_vcf) + \
+        required(&quot;--plot_png &quot;, self.output_plot_png) + \
+        required(&quot;--cna_json &quot;, self.output_cna_json) + \
+        required(&quot;--purity_json &quot;, self.output_purity_json)
+</code></pre>
+
+<h3 id="makecnvkittracks">MakeCNVkitTracks</h3>
+<p>Generate a IGV tracks representing the profile and segment information from a CNV-kit run.</p>
+<pre><code class="py">class MakeCNVkitTracks(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_cns = None
+        self.input_cnr = None
+        self.output_profile_bedgraph = None
+        self.output_segments_bedgraph = None
+        self.jobname = &quot;make_cnvkit_tracks&quot;
+
+    def command(self):
+        awk_cmd1 = &quot;awk '$1 != \&quot;chromosome\&quot; {print $1\&quot;\\t\&quot;$2\&quot;\\t\&quot;$3\&quot;\\t\&quot;$5}' %s &gt; %s&quot; % \
+                   (self.input_cnr, self.output_profile_bedgraph)
+        awk_cmd2 = &quot;awk '$1 != \&quot;chromosome\&quot; {print $1\&quot;\\t\&quot;$2\&quot;\\t\&quot;$3\&quot;\\t\&quot;$5}' %s &gt; %s&quot; % \
+                   (self.input_cns, self.output_segments_bedgraph)
+        return &quot;{} &amp;&amp; {}&quot;.format(awk_cmd1, awk_cmd2)
+</code></pre>
+
+<h3 id="makeqdnaseqtracks">MakeQDNAseqTracks</h3>
+<p>Generate a IGV tracks representing the information from a QDNA-seq run.</p>
+<pre><code class="py">class MakeQDNAseqTracks(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_qdnaseq_file = None
+        self.output_segments_bedgraph = None
+        self.output_copynumber_tdf = None
+        self.output_readcount_tdf = None
+        self.jobname = &quot;make_qdnaseq_tracks&quot;
+
+    def command(self):
+        copynumber_wig = &quot;{scratch}/copynumber-{uuid}.wig&quot;.format(
+            scratch=self.scratch, uuid=uuid.uuid4())
+        readcount_wig = &quot;{scratch}/readcount-{uuid}.wig&quot;.format(
+            scratch=self.scratch, uuid=uuid.uuid4())
+
+        qdnaseq_to_bedgraph_cmd = &quot;qdnaseq_to_bedgraph.py {} {}&quot;.format(
+            self.input_qdnaseq_file, self.output_segments_bedgraph)
+
+        qdnaseq_to_wig_cmd = &quot;qdnaseq_to_wig.py {} {} {}&quot;.format(
+            self.input_qdnaseq_file, copynumber_wig, readcount_wig)
+        igvtools_cmd1 = &quot;igvtools toTDF {copynumber_wig} {copynumber_tdf} hg19&quot;.format(
+            copynumber_wig=copynumber_wig, copynumber_tdf=self.output_copynumber_tdf
+        )
+        igvtools_cmd2 = &quot;igvtools toTDF {readcount_wig} {readcount_tdf} hg19&quot;.format(
+            readcount_wig=readcount_wig, readcount_tdf=self.output_readcount_tdf
+        )
+
+        return &quot;{} &amp;&amp; {} &amp;&amp; {}&quot;.format(qdnaseq_to_bedgraph_cmd,
+                                       qdnaseq_to_wig_cmd,
+                                       igvtools_cmd1,
+                                       igvtools_cmd2)
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

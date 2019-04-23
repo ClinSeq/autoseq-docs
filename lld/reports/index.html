@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Reports - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Reports";
+    var mkdocs_page_input_path = "lld/reports.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Reports</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h3 id="compilemetadata">CompileMetadata</h3>
+<p>return:</p>
+<p>compileMetadata 3098121 3098849 --db_config $HOME/repos/reportgen/tests/referral-db-config.json --output /dev/stdout  --address_table_file reportgen/assets/addresses.csv</p>
+<pre><code class="py">class CompileMetadata(Job):
+    def __init__(self, referral_db_conf, blood_barcode, tumor_barcode, output_json, addresses):
+        Job.__init__(self)
+        self.referral_db_conf = referral_db_conf
+        self.blood_barcode = blood_barcode
+        self.tumor_barcode = tumor_barcode
+        self.output_json = output_json
+        self.addresses = addresses
+
+    def command(self):
+        return &quot;compileMetadata&quot; + \
+               required('', self.blood_barcode) + \
+               required('', self.tumor_barcode) + \
+               required('--db_config ', self.referral_db_conf) + \
+               required('--address_table_file ', self.addresses) + \
+               required('--output ', self.output_json)
+</code></pre>
+
+<pre><code class="py">class CompileAlasccaGenomicJson(Job):
+    def __init__(self, input_somatic_vcf, input_cn_calls, input_msisensor,
+                 input_purity_qc, input_contam_qc, input_tcov_qc, input_ncov_qc,
+                 output_json):
+        Job.__init__(self)
+        self.input_somatic_vcf = input_somatic_vcf
+        self.input_cn_calls = input_cn_calls
+        self.input_msisensor = input_msisensor
+        self.input_purity_qc = input_purity_qc
+        self.input_contam_qc = input_contam_qc
+        self.input_tcov_qc = input_tcov_qc
+        self.input_ncov_qc = input_ncov_qc
+        self.output_json = output_json
+
+    def command(self):
+        return 'compileAlasccaGenomicReport ' + \
+               required('', self.input_somatic_vcf) + \
+               required('', self.input_cn_calls) + \
+               required('', self.input_msisensor) + \
+               required('--tumorCovJSON ', self.input_tcov_qc) + \
+               required('--normalCovJSON ', self.input_ncov_qc) + \
+               required('--purityJSON ', self.input_purity_qc) + \
+               required('--contaminationJSON ', self.input_contam_qc) + \
+               required('--output ', self.output_json)
+</code></pre>
+
+<pre><code class="py">class WriteAlasccaReport(Job):
+    def __init__(self, input_genomic_json, input_metadata_json, output_pdf, alascca_only=False):
+        Job.__init__(self)
+        self.input_metadata_json = input_metadata_json
+        self.input_genomic_json = input_genomic_json
+        self.output_pdf = output_pdf
+        self.alascca_only = alascca_only
+
+    def command(self):
+        tmpdir = &quot;{}/write-alascca-report-{}&quot;.format(self.scratch, uuid.uuid4())
+        mkdir_tmp_cmd = &quot;mkdir -p {}&quot;.format(tmpdir)
+        tmp_pdf = os.path.join(tmpdir, 'Report.pdf')
+        cmd = 'writeAlasccaReport ' + \
+              required(' --tmp_dir ', tmpdir) + \
+              required(' --output_dir ', tmpdir) + \
+              conditional(self.alascca_only, &quot; --alascca_only &quot;) + \
+              required('', self.input_genomic_json) + \
+              required('', self.input_metadata_json)
+
+        cp_cmd = &quot;cp {} {}&quot;.format(tmp_pdf, self.output_pdf)
+        rmdir_cmd = &quot;rm -r {}&quot;.format(tmpdir)
+
+        return &quot; &amp;&amp; &quot;.join([mkdir_tmp_cmd, cmd, cp_cmd, rmdir_cmd])
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Utils - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Utils";
+    var mkdocs_page_input_path = "lld/utils.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Utils</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h3 id="uniquecapture">UniqueCapture</h3>
+<p>Fields defining a unique library capture item. Note: A library capture item can
+include an item where no capture was performed; i.e. capture_kit_id indicates
+whole-genome sequencing:</p>
+<pre><code class="py">UniqueCapture = collections.namedtuple(
+    'UniqueCapture',
+
+    ['project',
+    'sdid',
+    'sample_type',
+    'sample_id',
+    'library_kit_id',
+    'capture_kit_id']
+)
+</code></pre>
+
+<h3 id="data_available_for_clinseq_barcode">data_available_for_clinseq_barcode</h3>
+<p>Check that data is available for the specified clinseq barcode in the specified library folder.</p>
+<ul>
+<li>param libdir: Directory name where fastqs are organised.</li>
+<li>param clinseq_barcode: A valid clinseq barcode string</li>
+<li>return: True if data is available, False otherwise</li>
+</ul>
+<pre><code class="py">def data_available_for_clinseq_barcode(libdir, clinseq_barcode):
+    if not clinseq_barcode_is_valid(clinseq_barcode):
+        raise ValueError(&quot;Invalid clinseq barcode: &quot; + clinseq_barcode)
+
+    filedir = os.path.join(libdir, clinseq_barcode)
+    if not os.path.exists(filedir):
+        logging.warn(&quot;Dir {} does not exists for {}. Not using library.&quot;.format(filedir, clinseq_barcode))
+        return False
+    if find_fastqs(clinseq_barcode, libdir) == (None, None):
+        logging.warn(&quot;No fastq files found for {} in dir {}&quot;.format(clinseq_barcode, filedir))
+        return False
+
+    logging.debug(&quot;Library {} has data. Using it.&quot;.format(clinseq_barcode))
+    return True
+</code></pre>
+
+<h3 id="convert_to_libdict">convert_to_libdict</h3>
+<p>Converts a clinseq_barcode into a dictionary - introduced to maintain compatibility
+with the mongoDB "libraries" collection, when parse_orderform is used in autoseq-api.</p>
+<ul>
+<li>param clinseq_barcode: A clinseq barcode string </li>
+<li>return: A dictionary containing the field types and values present in the barcode</li>
+</ul>
+<pre><code class="py">def convert_to_libdict(clinseq_barcode):
+
+    library_id = clinseq_barcode
+
+    if not clinseq_barcode_is_valid(clinseq_barcode):
+        raise ValueError(&quot;Invalid clinseq barcode: &quot; + clinseq_barcode)
+
+    capture_id = parse_capture_id(clinseq_barcode)
+    type = parse_sample_type(clinseq_barcode)
+    sample_id = parse_sample_id(clinseq_barcode)
+    project_id = parse_project(clinseq_barcode)
+    sdid = parse_sdid(clinseq_barcode)
+    prep_id = parse_prep_id(clinseq_barcode)
+
+    return {&quot;library_id&quot;: library_id, &quot;capture_id&quot;: capture_id, &quot;type&quot;: type, &quot;sample_id&quot;: sample_id,
+            &quot;project_id&quot;: project_id, &quot;sdid&quot;: sdid, &quot;prep_id&quot;: prep_id}
+</code></pre>
+
+<h3 id="extract_unique_capture">extract_unique_capture</h3>
+<p>Parses the specified clinseq barcode and produces a corresponding
+UniqueCapture representing the unique library capture corresponding
+to this clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode_tuple: A clinseq barcode string</li>
+<li>return: UniqueCapture named tuple</li>
+</ul>
+<pre><code class="py">def extract_unique_capture(clinseq_barcode):
+    if not clinseq_barcode_is_valid(clinseq_barcode):
+        raise ValueError(&quot;Invalid clinseq barcode: &quot; + clinseq_barcode)
+
+    project = parse_project(clinseq_barcode)
+    sdid = parse_sdid(clinseq_barcode)
+    sample_type = parse_sample_type(clinseq_barcode)
+    sample_id = parse_sample_id(clinseq_barcode)
+    prep_id = parse_prep_id(clinseq_barcode)
+    capture_id = parse_capture_id(clinseq_barcode)
+
+    return UniqueCapture(project,
+                         sdid,
+                         sample_type,
+                         sample_id,
+                         extract_kit_id(prep_id),
+                         extract_kit_id(capture_id))
+</code></pre>
+
+<h3 id="parse_project">parse_project</h3>
+<p>Extract the project string from the specified clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string.</li>
+<li>return: The project field from the input string.</li>
+</ul>
+<pre><code class="py">def parse_project(clinseq_barcode):
+
+    return clinseq_barcode.split(&quot;-&quot;)[0]
+</code></pre>
+
+<h3 id="compose_sample_str">compose_sample_str</h3>
+<p>Produce a string representing the unique sample for the specified library capture item.</p>
+<ul>
+<li>param capture: Named tuple indicating a unique sample library capture. </li>
+<li>return: Dash-delimited string of the fields uniquely identifying the sample.</li>
+</ul>
+<pre><code class="py">def compose_sample_str(capture):
+
+    return &quot;{}-{}-{}-{}&quot;.format(
+        capture.project,
+        capture.sdid,
+        capture.sample_type,
+        capture.sample_id
+    )
+</code></pre>
+
+<h3 id="compose_lib_capture_str">compose_lib_capture_str</h3>
+<p>Produce a string for a unique library capture item.</p>
+<ul>
+<li>param capture: A named tuple identifying a unique sample library capture.</li>
+<li>return: A dash-delimted string of the fields uniquely identifying the capture.</li>
+</ul>
+<pre><code class="py">def compose_lib_capture_str(capture):
+
+    return &quot;{}-{}-{}-{}-{}-{}&quot;.format(
+        capture.project,
+        capture.sdid,
+        capture.sample_type,
+        capture.sample_id,
+        capture.library_kit_id,
+        capture.capture_kit_id)
+</code></pre>
+
+<h3 id="parse_sample_type">parse_sample_type</h3>
+<p>Extract the sample type from the clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string.</li>
+<li>return: The sample type field from the input string.</li>
+</ul>
+<pre><code class="py">def parse_sample_type(clinseq_barcode):
+
+    return clinseq_barcode.split(&quot;-&quot;)[3]
+</code></pre>
+
+<h3 id="parse_sample_id">parse_sample_id</h3>
+<p>Extract the sample ID from the clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string.</li>
+<li>return: The sample ID field from the input string.</li>
+</ul>
+<pre><code class="py">def parse_sample_id(clinseq_barcode):
+
+    return clinseq_barcode.split(&quot;-&quot;)[4]
+</code></pre>
+
+<h3 id="parse_sdid">parse_sdid</h3>
+<p>Extract the SDID from the clinseq barcode, including the "P-" prefix.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string. </li>
+<li>return: The SDID field from the input string.</li>
+</ul>
+<pre><code class="py">def parse_sdid(clinseq_barcode):
+
+    return &quot;-&quot;.join(clinseq_barcode.split(&quot;-&quot;)[1:3])
+</code></pre>
+
+<h3 id="parse_prep_id">parse_prep_id</h3>
+<p>Extract the library prep ID (the entire string - not just the kit ID) from
+the specified clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string. </li>
+<li>return: Library prep ID string.</li>
+</ul>
+<pre><code class="py">def parse_prep_id(clinseq_barcode):
+
+    return clinseq_barcode.split(&quot;-&quot;)[5]
+</code></pre>
+
+<h3 id="parse_capture_id">parse_capture_id</h3>
+<p>Extract the library capture ID (the entire string - not just the capture kit ID)
+from the specified clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode: Dash-delimited clinseq barcode string. </li>
+<li>return: Library capture ID string.</li>
+</ul>
+<pre><code class="py">def parse_capture_id(clinseq_barcode):
+
+    return clinseq_barcode.split(&quot;-&quot;)[6]
+</code></pre>
+
+<h3 id="extract_kit_id">extract_kit_id</h3>
+<p>Extract the kit type from a specified kit string (either library or capture kit).</p>
+<ul>
+<li>param kit_string: A string indicating a kit type, where the first two letters indicate the kit ID. </li>
+<li>return: The kit ID, comprising the first two letters.</li>
+</ul>
+<pre><code class="py">def extract_kit_id(kit_string):
+
+    if len(kit_string) &lt; 3:
+        raise ValueError(&quot;Invalid kit string: &quot; + kit_string)
+
+    return kit_string[:2]
+</code></pre>
+
+<h3 id="project_valid">project_valid</h3>
+<p>Validate the project code</p>
+<ul>
+<li>return True or False (Boolean)</li>
+</ul>
+<pre><code class="py">def project_valid(project_str):
+    return project_str in [&quot;AL&quot;, &quot;LB&quot;, &quot;OT&quot;]
+</code></pre>
+
+<h3 id="sdid_valid">sdid_valid</h3>
+<p>Validate the sd id</p>
+<ul>
+<li>return True or False (Boolean)</li>
+</ul>
+<pre><code class="py">def sdid_valid(sdid_str):
+    return re.match(&quot;^P-[a-zA-Z0-9]+$&quot;, sdid_str) is not None
+</code></pre>
+
+<h3 id="sample_type_valid">sample_type_valid</h3>
+<p>validation for sample type. It should be N, T, CFDNA</p>
+<ul>
+<li>return Boolean (True or False)</li>
+</ul>
+<pre><code class="py">def sample_type_valid(sample_type_str):
+    return sample_type_str in [&quot;N&quot;, &quot;T&quot;, &quot;CFDNA&quot;]
+</code></pre>
+
+<h3 id="sample_id_valid">sample_id_valid</h3>
+<p>validation for sample id</p>
+<ul>
+<li>return Boolean (True or False)</li>
+</ul>
+<pre><code class="py">def sample_id_valid(sample_id_str):
+    return re.match(&quot;^[a-zA-Z0-9]+$&quot;, sample_id_str) is not None
+</code></pre>
+
+<h3 id="prep_id_valid">prep_id_valid</h3>
+<p>validate the library prep id</p>
+<ul>
+<li>return Boolean (True or False)</li>
+</ul>
+<pre><code class="py">def prep_id_valid(prep_id_str):
+    return re.match(&quot;^[A-Z]{2}[0-9]+$&quot;, prep_id_str) is not None
+</code></pre>
+
+<h3 id="capture_id_valid">capture_id_valid</h3>
+<p>validate the capture kit id</p>
+<ul>
+<li>return Boolean (True or False)</li>
+</ul>
+<pre><code class="py">def capture_id_valid(capture_id_str):
+    return (re.match(&quot;^[A-Z]{2}[0-9]+$&quot;, capture_id_str) is not None) or \
+           (capture_id_str == &quot;WGS&quot;)
+</code></pre>
+
+<h3 id="clinseq_barcode_is_valid">clinseq_barcode_is_valid</h3>
+<p>Test the structure of the specified clinseq barcode for validity.
+Barcode format is defined at https://github.com/clinseq/autoseq</p>
+<ul>
+<li>param clinseq_barcode: The input clinseq barcode.</li>
+<li>return: True if the barcode has valid structure, False otherwise.</li>
+</ul>
+<pre><code class="py">def clinseq_barcode_is_valid(clinseq_barcode):
+
+    fields = clinseq_barcode.split(&quot;-&quot;)
+    if len(fields) != 7:
+        return False
+
+    project_str = fields[0]
+    sdid_str = &quot;-&quot;.join(fields[1:3])
+    sample_type_str = fields[3]
+    sample_id_str = fields[4]
+    prep_id_str = fields[5]
+    capture_id_str = fields[6]
+
+    barcode_valid = \
+        project_valid(project_str) and sdid_valid(sdid_str) and sample_type_valid(sample_type_str) and \
+        sample_id_valid(sample_id_str) and prep_id_valid(prep_id_str) and capture_id_valid(capture_id_str)
+
+    return barcode_valid
+</code></pre>
+
+<h3 id="extract_clinseq_barcodes">extract_clinseq_barcodes</h3>
+<p>Extrat clinseq barcodes from the specified input file:</p>
+<ul>
+<li>
+<p>param input_filename: Either a .txt listing clinseq barcodes one per line,
+or a .xlsx order form file containing the barcodes.</p>
+</li>
+<li>
+<p>return: A list of (not-yet validated) dash-delimited clinseq barcodes.</p>
+</li>
+</ul>
+<pre><code class="py">def extract_clinseq_barcodes(input_filename):
+
+    toks = input_filename.split(&quot;.&quot;)
+
+    if toks[-1] == &quot;txt&quot;:
+        return list(set([line.strip() for line in open(input_filename).readlines()]))
+    elif toks[-1] == &quot;xlsx&quot;:
+        return list(set(parse_orderform(input_filename)))
+    else:
+        raise ValueError(&quot;Invalid clinseq barcodes file type: &quot; + input_filename)
+</code></pre>
+
+<h3 id="validate_clinseq_barcodes">validate_clinseq_barcodes</h3>
+<p>Checks all the specified clinseq barcodes for validity and raises an
+Exception if any are not.</p>
+<ul>
+<li>param clinseq_barcodes: List of clinseq barcode strings.</li>
+</ul>
+<pre><code class="py">def validate_clinseq_barcodes(clinseq_barcodes):
+
+    # Check the input clinseq barcodes for validity:
+    for clinseq_barcode in clinseq_barcodes:
+        if not clinseq_barcode_is_valid(clinseq_barcode):
+            raise ValueError(&quot;Invalid clinseq barcode: &quot; + clinseq_barcode)
+</code></pre>
+
+<h3 id="create_scaffold_sampledict">create_scaffold_sampledict</h3>
+<p>Generate a scaffold sample dictionary, with SDIDs as keys and clinseq barcode information
+dictionaries as values.</p>
+<ul>
+<li>param sdids: List of SDID strings</li>
+<li>return: Dictionary with SDID keys and empty clinseq barcode information dictionaries as values.</li>
+</ul>
+<pre><code class="py">def create_scaffold_sampledict(sdids):
+
+    scaffold_dict = {}
+    for sdid in sdids:
+        curr_clinseq_barcode_info = {&quot;sdid&quot;: sdid, &quot;N&quot;: [], &quot;T&quot;: [], &quot;CFDNA&quot;: []}
+        scaffold_dict[sdid] = curr_clinseq_barcode_info
+
+    return scaffold_dict
+</code></pre>
+
+<h3 id="populate_clinseq_barcode_info">populate_clinseq_barcode_info</h3>
+<p>Populates the specified clinseq barcode information item with the information
+in the specified clinseq barcode.</p>
+<ul>
+<li>param clinseq_barcode_info: A dictionary containing clinseq barcode information
+for a single SDID.</li>
+<li>param clinseq_barcode: A validated clinseq barcode string.</li>
+</ul>
+<pre><code class="py">def populate_clinseq_barcode_info(clinseq_barcode_info, clinseq_barcode):
+
+    if not clinseq_barcode_is_valid(clinseq_barcode):
+        raise ValueError(&quot;Invalid clinseq barcode: &quot;, clinseq_barcode)
+
+    # Append this clinseq barcode to the relevant field in the specified clinseq barcode
+    # info dictionary:
+    sample_type = parse_sample_type(clinseq_barcode)
+    clinseq_barcode_info[sample_type].append(clinseq_barcode)
+</code></pre>
+
+<h3 id="convert_barcodes_to_sampledict">convert_barcodes_to_sampledict</h3>
+<p>Coverts the specified clinseq barcode strings into a dictionary linking
+from SDID to clinseq barcode information for that individual.</p>
+<ul>
+<li>param clinseq_barcodes: A list of valid clinseq barcode strings</li>
+<li>return: A dictionary with the required structure.</li>
+</ul>
+<pre><code class="py">def convert_barcodes_to_sampledict(clinseq_barcodes):
+
+    for curr_clinseq_barcode in clinseq_barcodes:
+        if not clinseq_barcode_is_valid(curr_clinseq_barcode):
+            raise ValueError(&quot;Invalid clinseq barcode: &quot;, curr_clinseq_barcode)
+
+    # Extract set of unique SDIDs from the specified clinseq barcodes:
+    sdids = set([parse_sdid(clinseq_barcode) for clinseq_barcode in clinseq_barcodes])
+
+    # Create a scaffold dictionary from those SDIDs:
+    sdid_to_clinseq_barcode_info = create_scaffold_sampledict(sdids)
+
+    for clinseq_barcode in clinseq_barcodes:
+        populate_clinseq_barcode_info(sdid_to_clinseq_barcode_info[parse_sdid(clinseq_barcode)],
+                                      clinseq_barcode)
+
+    return sdid_to_clinseq_barcode_info
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>

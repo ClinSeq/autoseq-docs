@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <meta name="author" content="Clinseq Team">
+  <link rel="shortcut icon" href="../../img/favicon.ico">
+  <title>Generateref - Autoseq 2.0</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "Generateref";
+    var mkdocs_page_input_path = "lld/generateref.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/python.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/rust.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href="../.." class="icon icon-home"> Autoseq 2.0</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../..">Autoseq</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../autoseq/">Quick Start</a>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../../pipeline/">Work Flow</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../..">Autoseq 2.0</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>Generateref</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h3 id="generatereffilespipeline">GenerateRefFilesPipeline</h3>
+<p>To generate reference files from </p>
+<pre><code class="py">class GenerateRefFilesPipeline(PypedreamPipeline):
+    outdir = None
+    maxcores = None
+
+    def __init__(self, genome_resources, outdir, maxcores=1, runner=Shellrunner()):
+        PypedreamPipeline.__init__(self, normpath(outdir), runner=runner)
+
+        self.genome_resources = genome_resources
+        self.input_reference_sequence = &quot;{}/human_g1k_v37_decoy.fasta.gz&quot;.format(genome_resources)
+        self.cosmic_vcf = &quot;{}/CosmicCodingMuts_v71.vcf.gz&quot;.format(genome_resources)
+        self.qdnaseq_background = &quot;{}/qdnaseq_background.Rdata&quot;.format(genome_resources)
+        self.swegene_common_vcf = &quot;{}/swegen_common.vcf.gz&quot;.format(genome_resources)
+        self.outdir = outdir
+        self.maxcores = maxcores
+        self.reference_data = dict()
+
+        self.exac_remote = &quot;ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.3.1/ExAC.r0.3.1.sites.vep.vcf.gz&quot;
+        self.dbsnp_remote = &quot;ftp://ftp.ncbi.nlm.nih.gov/snp/organisms/human_9606_b149_GRCh37p13/VCF/All_20161121.vcf.gz&quot;
+        self.clinvar_remote = &quot;ftp://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh37/archive_1.0/2016/clinvar_20160203.vcf.gz&quot;
+        self.icgc_somatic_remote = &quot;https://dcc.icgc.org/api/v1/download?fn=/release_20/Summary/simple_somatic_mutation.aggregated.vcf.gz&quot;
+        self.ensembl_version = &quot;75&quot;
+        self.ensembl_gtf_remote = &quot;ftp://ftp.ensembl.org/pub/release-&quot; + self.ensembl_version + \
+                                  &quot;/gtf/homo_sapiens/Homo_sapiens.GRCh37.&quot; + self.ensembl_version + &quot;.gtf.gz&quot;
+        self.mitranscriptome_remote = &quot;http://mitranscriptome.org/download/mitranscriptome.gtf.tar.gz&quot;
+
+        self.prepare_reference_genome()
+        self.prepare_genes()
+        self.prepare_sveffect_regions()
+        self.prepare_intervals()
+        self.prepare_variants()
+
+        fetch_vep_cache = InstallVep()
+        fetch_vep_cache.output_dir = &quot;{}/vep/&quot;.format(self.outdir)
+        self.add(fetch_vep_cache)
+
+        self.reference_data['vep_dir'] = fetch_vep_cache.output_dir
+
+        self.make_ref_paths_relative()
+
+        with open(&quot;{}/autoseq-genome.json&quot;.format(self.outdir), &quot;w&quot;) as output_file:
+            json.dump(self.reference_data, output_file, indent=4, sort_keys=True)
+</code></pre>
+
+<h3 id="prepare_sveffect_regions">prepare_sveffect_regions</h3>
+<pre><code class="py">def prepare_sveffect_regions(self):
+    for regions_name in [&quot;ar_regions&quot;, &quot;ts_regions&quot;, &quot;fusion_regions&quot;]:
+        file_full_path = &quot;{}/{}.bed&quot;.format(
+            self.genome_resources,
+            regions_name,
+        )
+
+        copy_regions = Copy(input_file=file_full_path,
+                            output_file=&quot;{}/intervals/{}&quot;.format(
+                                self.outdir,
+                                os.path.basename(file_full_path),
+                            ))
+
+        self.reference_data[regions_name] = copy_regions.output
+
+        self.add(copy_regions)
+</code></pre>
+
+<h3 id="prepare_variants">prepare_variants</h3>
+<pre><code class="py">def prepare_variants(self):
+    curl_dbsnp = CurlSplitAndLeftAlign()
+    curl_dbsnp.input_reference_sequence = self.reference_data['reference_genome']
+    curl_dbsnp.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_dbsnp.remote = self.dbsnp_remote
+    curl_dbsnp.output = &quot;{}/variants/{}&quot;.format(self.outdir, os.path.basename(self.dbsnp_remote))
+    curl_dbsnp.is_intermediate = True
+    self.add(curl_dbsnp)
+
+    filter_dbsnp = VcfFilter()
+    filter_dbsnp.input = curl_dbsnp.output
+    filter_dbsnp.filter = &quot;\&quot;! ( SAO = 3 | SAO = 2 )\&quot;&quot;
+    filter_dbsnp.output = &quot;{}/variants/dbsnp142-germline-only.vcf.gz&quot;.format(self.outdir)
+    self.add(filter_dbsnp)
+
+    curl_cosmic = CurlSplitAndLeftAlign()
+    curl_cosmic.input_reference_sequence = self.reference_data['reference_genome']
+    curl_cosmic.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_cosmic.remote = &quot;file://&quot; + self.cosmic_vcf
+    curl_cosmic.output = &quot;{}/variants/{}&quot;.format(self.outdir, os.path.basename(self.cosmic_vcf))
+    self.add(curl_cosmic)
+
+    curl_clinvar = CurlSplitAndLeftAlign()
+    curl_clinvar.input_reference_sequence = self.reference_data['reference_genome']
+    curl_clinvar.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_clinvar.remote = self.clinvar_remote
+    curl_clinvar.output = &quot;{}/variants/{}&quot;.format(self.outdir, os.path.basename(self.clinvar_remote))
+    self.add(curl_clinvar)
+
+    curl_exac = CurlSplitAndLeftAlign()
+    curl_exac.input_reference_sequence = self.reference_data['reference_genome']
+    curl_exac.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_exac.remote = self.exac_remote
+    curl_exac.output = &quot;{}/variants/{}&quot;.format(self.outdir, os.path.basename(self.exac_remote))
+    self.add(curl_exac)
+
+    curl_icgc = CurlSplitAndLeftAlign()
+    curl_icgc.input_reference_sequence = self.reference_data['reference_genome']
+    curl_icgc.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_icgc.remote = self.icgc_somatic_remote
+    curl_icgc.output = &quot;{}/variants/{}&quot;.format(self.outdir,
+                                               &quot;icgc_release_20_simple_somatic_mutation.aggregated.vcf.gz&quot;)
+    self.add(curl_icgc)
+
+    curl_swegene = CurlSplitAndLeftAlign()
+    curl_swegene.input_reference_sequence = self.reference_data['reference_genome']
+    curl_swegene.input_reference_sequence_fai = self.reference_data['reference_genome'] + &quot;.fai&quot;
+    curl_swegene.remote = &quot;file://&quot; + self.swegene_common_vcf
+    curl_swegene.output = &quot;{}/variants/{}&quot;.format(self.outdir, os.path.basename(self.swegene_common_vcf))
+    self.add(curl_swegene)
+
+    self.reference_data['dbSNP'] = filter_dbsnp.output
+    self.reference_data['cosmic'] = curl_cosmic.output
+    self.reference_data['exac'] = curl_exac.output
+    self.reference_data['clinvar'] = curl_clinvar.output
+    self.reference_data['icgc'] = curl_icgc.output
+    self.reference_data['swegene_common'] = curl_swegene.output
+</code></pre>
+
+<h3 id="prepare_cnvkit">prepare_cnvkit</h3>
+<p>param: cnv_kit_ref_filename: String name of a cnvkit reference file (either <code>.cnn</code> or <code>.cnvkitref.txt</code>), to be registered in self.ref_data.</p>
+<pre><code class="py">def prepare_cnvkit(self, cnv_kit_ref_filename):
+
+    file_full_path = &quot;{}/target_intervals/{}&quot;.format(self.genome_resources, cnv_kit_ref_filename)
+
+    # Extract the capture+library+sampletype strings:
+    capture_library_sampletype = cnv_kit_ref_filename.split(&quot;.&quot;)[:3]
+
+    copy_cnvkit_ref = Copy(input_file=file_full_path,
+                           output_file=&quot;{}/intervals/targets/{}&quot;.format(self.outdir,
+                                                                        os.path.basename(file_full_path))
+                          )
+    self.add(copy_cnvkit_ref)
+
+    capture_name = capture_library_sampletype[0]
+    library_kit_name = capture_library_sampletype[1]
+    sample_type = capture_library_sampletype[2]
+
+    ref_type = &quot;cnvkit-fix&quot;
+    if cnv_kit_ref_filename.endswith((&quot;cnn&quot;)):
+        ref_type = &quot;cnvkit-ref&quot;
+
+    # FIXME: Ugly; refactor. This registers the cnvkit reference file copy in the autoseq genome dictionary:
+    if ref_type not in self.reference_data['targets'][capture_name]:
+        self.reference_data['targets'][capture_name][ref_type] = {}
+    if library_kit_name not in self.reference_data['targets'][capture_name][ref_type]:
+        self.reference_data['targets'][capture_name][ref_type][library_kit_name] = {}
+    self.reference_data['targets'][capture_name][ref_type][library_kit_name][sample_type] = \
+        copy_cnvkit_ref.output
+</code></pre>
+
+<h3 id="prepare_msings">prepare_msings</h3>
+<pre><code class="py">def prepare_msings(self, filename_base, capture_name):
+
+    for msings_extn in [&quot;baseline&quot;, &quot;bed&quot;, &quot;msi_intervals&quot;]:
+        msings_ref_file = filename_base + &quot;.msings.&quot; + msings_extn
+        if os.path.exists(msings_ref_file):
+            copy_msings_ref = Copy(input_file=msings_ref_file,
+                                   output_file=&quot;{}/intervals/targets/{}&quot;.format(self.outdir,
+                                                                                os.path.basename(
+                                                                                    msings_ref_file))
+                                   )
+            self.add(copy_msings_ref)
+            self.reference_data['targets'][capture_name]['msings-' + msings_extn] = copy_msings_ref.output
+        else:
+            self.reference_data['targets'][capture_name]['msings-' + msings_extn] = None
+
+# FIXME: The prepare_intervals() method is becoming very unwieldy. Consider refactoring.
+
+</code></pre>
+
+<h3 id="prepare_intervals">prepare_intervals</h3>
+<pre><code class="py">def prepare_intervals(self):
+    self.reference_data['targets'] = {}
+    target_intervals_dir = &quot;{}/target_intervals/&quot;.format(self.genome_resources)
+    input_files = [f for f in os.listdir(target_intervals_dir) if f.endswith(&quot;.interval_list&quot;)]
+
+    scan_for_microsatellites = MsiSensorScan()
+    scan_for_microsatellites.input_fasta = self.reference_data['reference_genome']
+    scan_for_microsatellites.homopolymers_only = True
+    scan_for_microsatellites.output = &quot;{}/intervals/msisensor-microsatellites.tsv&quot;.format(self.outdir)
+    self.add(scan_for_microsatellites)
+
+    for f in input_files:
+        file_full_path = &quot;{}/target_intervals/{}&quot;.format(self.genome_resources, f)
+        logging.debug(&quot;Parsing intervals file {}&quot;.format(file_full_path))
+        capture_name = stripsuffix(f, &quot;.interval_list&quot;)
+        self.reference_data['targets'][capture_name] = {}
+
+        copy_file = Copy(input_file=file_full_path,
+                         output_file=&quot;{}/intervals/targets/{}&quot;.format(self.outdir,
+                                                                      os.path.basename(file_full_path)))
+        self.add(copy_file)
+
+        slop_interval_list = SlopIntervalList()
+        slop_interval_list.input = copy_file.output
+        slop_interval_list.output = stripsuffix(copy_file.output, &quot;.interval_list&quot;) + &quot;.slopped20.interval_list&quot;
+        self.add(slop_interval_list)
+
+        interval_list_to_bed = IntervalListToBed()
+        interval_list_to_bed.input = slop_interval_list.output
+        interval_list_to_bed.output = stripsuffix(slop_interval_list.output, &quot;.interval_list&quot;) + &quot;.bed&quot;
+        self.add(interval_list_to_bed)
+
+        intersect_msi = IntersectMsiSites()
+        intersect_msi.input_msi_sites = scan_for_microsatellites.output
+        intersect_msi.target_bed = interval_list_to_bed.output
+        intersect_msi.output_msi_sites = stripsuffix(interval_list_to_bed.output, &quot;.bed&quot;) + &quot;.msisites.tsv&quot;
+        self.add(intersect_msi)
+
+        self.prepare_msings(stripsuffix(file_full_path, &quot;.interval_list&quot;), capture_name)
+
+        self.reference_data['targets'][capture_name]['blacklist-bed'] = None
+        blacklist_bed = stripsuffix(file_full_path, &quot;.interval_list&quot;) + &quot;.blacklist.bed&quot;
+        if os.path.exists(blacklist_bed):
+            blacklist_copy = Copy(input_file=blacklist_bed,
+                                  output_file=&quot;{}/intervals/targets/{}&quot;.format(
+                                      self.outdir,
+                                      os.path.basename(blacklist_bed),
+                                  ))
+            self.add(blacklist_copy)
+            self.reference_data['targets'][capture_name]['blacklist-bed'] = blacklist_copy.output
+
+        purecn_targets_file = stripsuffix(file_full_path, &quot;.interval_list&quot;) + &quot;.purecn.txt&quot;
+        if os.path.exists(purecn_targets_file):
+            copy_purecn_targets = Copy(input_file=purecn_targets_file,
+                                   output_file=&quot;{}/intervals/targets/{}&quot;.format(self.outdir,
+                                                                                os.path.basename(
+                                                                                    purecn_targets_file))
+                                   )
+            self.add(copy_purecn_targets)
+            self.reference_data['targets'][capture_name]['purecn_targets'] = copy_purecn_targets.output
+        else:
+            self.reference_data['targets'][capture_name]['purecn_targets'] = None
+
+        self.reference_data['targets'][capture_name]['targets-interval_list'] = copy_file.output
+        self.reference_data['targets'][capture_name]['targets-interval_list-slopped20'] = slop_interval_list.output
+        self.reference_data['targets'][capture_name]['targets-bed-slopped20'] = interval_list_to_bed.output
+        self.reference_data['targets'][capture_name]['msisites'] = intersect_msi.output_msi_sites
+
+    # Find all .cnn files and copy + register them for use in cnv kit:
+    for f in [f for f in os.listdir(target_intervals_dir) if (f.endswith(&quot;.cnn&quot;) or &quot;cnvkit-fix&quot; in f)]:
+        self.prepare_cnvkit(f)
+</code></pre>
+
+<h3 id="prepare_genes">prepare_genes</h3>
+<pre><code class="py">def prepare_genes(self):
+    curl_ensembl_gtf = Curl()
+    curl_ensembl_gtf.remote = self.ensembl_gtf_remote
+    curl_ensembl_gtf.output = &quot;{}/genes/{}&quot;.format(self.outdir, os.path.basename(self.ensembl_gtf_remote))
+    curl_ensembl_gtf.jobname = &quot;curl-ensembl-gtf&quot;
+    curl_ensembl_gtf.is_intermediate = True
+    self.add(curl_ensembl_gtf)
+
+    gunzip_ensembl_gtf = Gunzip()
+    gunzip_ensembl_gtf.input = curl_ensembl_gtf.output
+    gunzip_ensembl_gtf.output = stripsuffix(curl_ensembl_gtf.output, &quot;.gz&quot;)
+    gunzip_ensembl_gtf.is_intermediate = True
+    self.add(gunzip_ensembl_gtf)
+
+    filt_ensembl_gtf_chrs = FilterGTFChromosomes()
+    filt_ensembl_gtf_chrs.input = gunzip_ensembl_gtf.output
+    filt_ensembl_gtf_chrs.output = stripsuffix(gunzip_ensembl_gtf.output, &quot;.gtf&quot;) + &quot;.filtered.gtf&quot;
+    self.add(filt_ensembl_gtf_chrs)
+
+    gtf2genepred_ensembl = GTF2GenePred()
+    gtf2genepred_ensembl.input = filt_ensembl_gtf_chrs.output
+    gtf2genepred_ensembl.output = stripsuffix(filt_ensembl_gtf_chrs.output, &quot;.gtf&quot;) + &quot;.genepred&quot;
+    self.add(gtf2genepred_ensembl)
+
+    filt_genes_ensembl_gtf_genes = FilterGTFGenes()
+    filt_genes_ensembl_gtf_genes.input = filt_ensembl_gtf_chrs.output
+    filt_genes_ensembl_gtf_genes.output = stripsuffix(filt_ensembl_gtf_chrs.output, &quot;.gtf&quot;) + &quot;.genes-only.gtf&quot;
+    self.add(filt_genes_ensembl_gtf_genes)
+
+    self.reference_data['ensemblVersion'] = self.ensembl_version
+    self.reference_data['genesGtf'] = filt_ensembl_gtf_chrs.output
+    self.reference_data['genesGenePred'] = gtf2genepred_ensembl.output
+    self.reference_data['genesGtfGenesOnly'] = filt_genes_ensembl_gtf_genes.output
+</code></pre>
+
+<h3 id="prepare_reference_genome">prepare_reference_genome</h3>
+<pre><code class="py">def prepare_reference_genome(self):
+    genome_unzipped = stripsuffix(os.path.basename(self.input_reference_sequence), &quot;.gz&quot;)
+
+    gunzip_ref = Gunzip()
+    gunzip_ref.input = self.input_reference_sequence
+    gunzip_ref.output = &quot;{}/genome/{}&quot;.format(self.outdir, genome_unzipped)
+    self.add(gunzip_ref)
+
+    copy_ref_to_bwa = Copy(input_file=gunzip_ref.output,
+                           output_file=&quot;{}/bwa/{}&quot;.format(self.outdir, os.path.basename(gunzip_ref.output)))
+    self.add(copy_ref_to_bwa)
+
+    bwa_index = BwaIndex()
+    bwa_index.input_fasta = copy_ref_to_bwa.output
+    bwa_index.output = copy_ref_to_bwa.output + &quot;.bwt&quot;
+    bwa_index.algorithm = &quot;bwtsw&quot;
+    self.add(bwa_index)
+
+    create_dict = PicardCreateSequenceDictionary()
+    create_dict.input = gunzip_ref.output
+    create_dict.output_dict = gunzip_ref.output.replace(&quot;.fasta&quot;, &quot;&quot;) + &quot;.dict&quot;
+    self.add(create_dict)
+
+    samtools_faidx = SamtoolsFaidx()
+    samtools_faidx.input_fasta = gunzip_ref.output
+    samtools_faidx.output = gunzip_ref.output + &quot;.fai&quot;
+    self.add(samtools_faidx)
+
+    create_chrsizes = GenerateChrSizes()
+    create_chrsizes.input_fai = samtools_faidx.output
+    create_chrsizes.output = gunzip_ref.output.replace(&quot;.fasta&quot;, &quot;&quot;) + &quot;.chrsizes.txt&quot;
+    self.add(create_chrsizes)
+
+    copy_qdnaseq_bg = Copy(input_file=self.qdnaseq_background,
+                           output_file=&quot;{}/genome/{}&quot;.format(self.outdir,
+                                                             os.path.basename(self.qdnaseq_background)))
+    self.add(copy_qdnaseq_bg)
+
+    self.reference_data['reference_genome'] = gunzip_ref.output
+    self.reference_data['reference_dict'] = create_dict.output_dict
+    self.reference_data['chrsizes'] = create_chrsizes.output
+    self.reference_data['bwaIndex'] = bwa_index.input_fasta
+    self.reference_data['qdnaseq_background'] = copy_qdnaseq_bg.output
+</code></pre>
+
+<h3 id="make_ref_paths_relative">make_ref_paths_relative</h3>
+<p>Recursively traverse a given dictionary and make paths relative</p>
+<pre><code class="py">def make_ref_paths_relative(self):
+
+    def make_paths_relative(d):
+        for k, v in d.items():
+            if isinstance(v, dict):
+                make_paths_relative(v)
+            else:
+                if v and self.outdir in v:
+                    d[k] = os.path.relpath(v, self.outdir)
+
+    make_paths_relative(self.reference_data)
+</code></pre>
+
+<h3 id="filtergtfchromosomes">FilterGTFChromosomes</h3>
+<pre><code class="py">class FilterGTFChromosomes(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;filter-gtf-chrs&quot;
+
+    def command(self):
+        return &quot;gtf_filter_unused_chrs.py &quot; + \
+               required(&quot; &lt; &quot;, self.input) + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+
+<h3 id="filtergtfgenes">FilterGTFGenes</h3>
+<pre><code class="py">class FilterGTFGenes(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;filter-gtf-genes&quot;
+
+    def command(self):
+        return &quot;&quot;&quot;awk '{if($3==&quot;gene&quot;){print $0}}' &quot;&quot;&quot; + \
+               required(&quot; &quot;, self.input) + \
+               &quot;| sort -k1,1 -k4,4n &quot; + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+
+<h3 id="vcffilter">VcfFilter</h3>
+<pre><code class="py">class VcfFilter(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.filter = None
+        self.output = None
+        self.jobname = &quot;vcffilter&quot;
+
+    def command(self):
+        return &quot;zcat&quot; + \
+               required(&quot; &quot;, self.input) + \
+               &quot;| vcffilter &quot; + \
+               required(&quot;-f &quot;, self.filter) + \
+               &quot;| bgzip &quot; + required(&quot; &gt; &quot;, self.output) + \
+               &quot; &amp;&amp; tabix -p vcf {output}&quot;.format(output=self.output)
+</code></pre>
+
+<h3 id="curlsplitandleftalign">CurlSplitAndLeftAlign</h3>
+<pre><code class="py">class CurlSplitAndLeftAlign(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.remote = None
+        self.input_reference_sequence = None
+        self.input_reference_sequence_fai = None
+        self.output = None
+        self.jobname = &quot;curl-split-leftaln&quot;
+
+    def command(self):
+        required(&quot;&quot;, self.input_reference_sequence_fai)
+        return &quot;curl -L &quot; + \
+               required(&quot; &quot;, self.remote) + \
+               &quot;| gzip -d |&quot; + vt_split_and_leftaln(self.input_reference_sequence, allow_ref_mismatches=True) + \
+               &quot;| bgzip &quot; + required(&quot; &gt; &quot;, self.output) + \
+               &quot; &amp;&amp; tabix -p vcf {output}&quot;.format(output=self.output)
+</code></pre>
+
+<h3 id="installvep">InstallVep</h3>
+<pre><code class="py">class InstallVep(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.output_dir = None
+        self.jobname = &quot;fetch-vep-cache&quot;
+
+    def command(self):
+        return &quot;vep_install.pl --SPECIES homo_sapiens_vep --AUTO c --ASSEMBLY GRCh37 --NO_HTSLIB &quot; + \
+               required(&quot;--CACHEDIR &quot;, self.output_dir) + \
+               &quot; &amp;&amp; vep_convert_cache.pl &quot; + required(&quot;--dir &quot;, self.output_dir) + \
+               &quot; --species homo_sapiens --version 83_GRCh37&quot;
+</code></pre>
+
+<h3 id="gtf2genepred">GTF2GenePred</h3>
+<pre><code class="py">class GTF2GenePred(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;gtf2genepred&quot;
+
+    def command(self):
+        return &quot;gtfToGenePred -genePredExt &quot; + required(&quot; &quot;, self.input) + \
+               &quot;&quot;&quot; /dev/stdout |awk '{print $12&quot;\t&quot;$0}'|cut -f 1-11 &quot;&quot;&quot; + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+
+<h3 id="bwaindex">BwaIndex</h3>
+<pre><code class="py">class BwaIndex(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_fasta = None
+        self.algorithm = &quot;bwtsw&quot;
+        self.output = None
+        self.jobname = &quot;bwa-index&quot;
+
+    def command(self):
+        return &quot;bwa index&quot; + \
+               required(&quot;-a &quot;, self.algorithm) + \
+               required(&quot; &quot;, self.input_fasta)
+</code></pre>
+
+<h3 id="samtoolsfaidx">SamtoolsFaidx</h3>
+<pre><code class="py">class SamtoolsFaidx(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_fasta = None
+        self.output = None
+        self.jobname = &quot;samtools-faidx&quot;
+
+    def command(self):
+        return &quot;samtools faidx &quot; + \
+               required(&quot; &quot;, self.input_fasta)
+</code></pre>
+
+<h3 id="generatechrsizes">GenerateChrSizes</h3>
+<pre><code class="py">class GenerateChrSizes(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input_fai = None
+        self.output = None
+        self.jobname = &quot;make-chrsizes&quot;
+
+    def command(self):
+        return &quot;head -n 25 &quot; + \
+               required(&quot; &quot;, self.input_fai) + \
+               &quot;|cut -f 1-2 &quot; + \
+               required(&quot;&gt;&quot;, self.output)
+</code></pre>
+
+<h3 id="slopintervallist">SlopIntervalList</h3>
+<pre><code class="py">class SlopIntervalList(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;slop-interval-list&quot;
+
+    def command(self):
+        return &quot;slopIntervalList.py &quot; + \
+               required(&quot; &lt; &quot;, self.input) + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+
+<h3 id="intervallisttobed">IntervalListToBed</h3>
+<pre><code class="py">class IntervalListToBed(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;interval-list-to-bed&quot;
+
+    def command(self):
+        return &quot;picard_interval_list_to_bed6_converter.py &quot; + \
+               required(&quot; &quot;, self.input) + \
+               required(&quot; &quot;, self.output)
+</code></pre>
+
+<pre><code class="py">class Copy(Job):
+    def __init__(self, input_file, output_file):
+        Job.__init__(self)
+        self.input = input_file
+        self.output = output_file
+        self.jobname = &quot;copy&quot;
+
+    def command(self):
+        cmd = &quot;cp &quot; + \
+               required(&quot; &quot;, self.input) + \
+               required(&quot; &quot;, self.output)
+        if self.input.endswith(&quot;.bam&quot;):
+            cmd += &quot; &amp;&amp; samtools index {}&quot;.format(self.output)
+        return cmd
+</code></pre>
+
+<pre><code class="py">class Gunzip(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.input = None
+        self.output = None
+        self.jobname = &quot;gunzip&quot;
+
+    def command(self):
+        return &quot;gzip -cd &quot; + \
+               required(&quot; &quot;, self.input) + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+
+<pre><code class="py">class Curl(Job):
+    def __init__(self):
+        Job.__init__(self)
+        self.remote = None
+        self.output = None
+        self.jobname = &quot;curl&quot;
+
+    def command(self):
+        return &quot;curl &quot; + \
+               required(&quot; &quot;, self.remote) + \
+               required(&quot; &gt; &quot;, self.output)
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+          <a href="https://github.com/ClinSeq/autoseq" class="fa fa-github" style="float: left; color: #fcfcfc"> GitHub</a>
+      
+      
+      
+    </span>
+</div>
+    <script>var base_url = '../..';</script>
+    <script src="../../js/theme.js" defer></script>
+      <script src="../../search/main.js" defer></script>
+
+</body>
+</html>
