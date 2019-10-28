@@ -12,7 +12,7 @@ Piplines
 
 Note:
 
-  **This version of autoseq is specially updated for PROBIO trail on prostate cancer.**
+  **This version of autoseq is specially updated for PROBIO trial on prostate cancer**
 
 Installation
 -------------
