@@ -93,7 +93,7 @@ autoseq --ref ref.json --outdir /path/to/outdir --jobdb jobdb.json --cores 5 --r
 autoseq --ref ref.json --outdir /path/to/outdir --jobdb jobdb.json --cores 5 --runner_name slurmrunner --libdir /path/to/libdir --umi liqbio sample.json
 ```
 
-General Discriptions
+General Descriptions
 --------------------
 
 <b>Clinseq barcodes</b>
