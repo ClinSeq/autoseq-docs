@@ -116,7 +116,7 @@ Each sample+preparation+capture item should have a corresponding barcode with th
 
 *NOTE:* A clinseq barcode is not guaranteed to uniquely specify a single sample+library+capture item, but in practice it should be unique if precise preparation and capture times are included within the `PREPID` and `CAPTUREID` fields.
 
-##### it is always ideal to have the full sample string with prep and capture dates. example - `PB-P-00462065-CFDNA-04055058-KH20221214-C420221214
+##### it is always ideal to have the full sample string with prep and capture dates. example - PB-P-00462065-CFDNA-04055058-KH20221214-C420221214
 
 <b>Allowed Project IDs</b>
 
